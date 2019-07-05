@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>XlsxToLua</RootNamespace>
     <AssemblyName>XlsxToLua</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -30,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LitJson">
@@ -46,24 +49,30 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppValues.cs" />
-    <Compile Include="MapStringAnalyzeHelper.cs" />
-    <Compile Include="MapStringCheckHelper.cs" />
-    <Compile Include="MyCheckFunction.cs" />
+    <Compile Include="Reader\CSVReader.cs" />
+    <Compile Include="Analyzer\MapStringAnalyzeHelper.cs" />
+    <Compile Include="Checker\MapStringCheckHelper.cs" />
+    <Compile Include="Checker\MyCheckFunction.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TableAnalyzeHelper.cs" />
-    <Compile Include="TableCheckHelper.cs" />
-    <Compile Include="TableExportToCsClassHelper.cs" />
-    <Compile Include="TableExportToCsvHelper.cs" />
-    <Compile Include="TableExportToJavaClassHelper.cs" />
-    <Compile Include="TableExportToJsonHelper.cs" />
-    <Compile Include="TableExportToMySQLHelper.cs" />
-    <Compile Include="TableExportToLuaHelper.cs" />
+    <Compile Include="Analyzer\TableAnalyzeHelper.cs" />
+    <Compile Include="Checker\TableCheckHelper.cs" />
+    <Compile Include="Writer\TableExportToCsClassHelper.cs" />
+    <Compile Include="Writer\TableExportToLangCsvHelper.cs" />
+    <Compile Include="Writer\TableExportToCsvHelper.cs" />
+    <Compile Include="Writer\TableExportToJavaClassHelper.cs" />
+    <Compile Include="Writer\TableExportToJsonHelper.cs" />
+    <Compile Include="Writer\TableExportToMySQLHelper.cs" />
+    <Compile Include="Writer\TableExportToLuaHelper.cs" />
     <Compile Include="TableInfo.cs" />
-    <Compile Include="TxtConfigReader.cs" />
-    <Compile Include="Utils.cs" />
-    <Compile Include="XlsxReader.cs" />
+    <Compile Include="Reader\TxtConfigReader.cs" />
+    <Compile Include="Utility\Utils.cs" />
+    <Compile Include="Reader\XlsxReader.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

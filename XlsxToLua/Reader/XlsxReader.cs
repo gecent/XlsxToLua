@@ -46,27 +46,32 @@ public class XlsxReader
             for (int i = 0; i < dtSheet.Rows.Count; ++i)
             {
                 string sheetName = dtSheet.Rows[i]["TABLE_NAME"].ToString();
+                if (i == 0)
+                {
+                    AppValues.EXCEL_MY_SHEET_NAME = sheetName;
+                }
 
-                if (sheetName == AppValues.EXCEL_DATA_SHEET_NAME)
+                //if (sheetName == AppValues.EXCEL_DATA_SHEET_NAME)
+                if (!string.IsNullOrEmpty(sheetName))
                     isFoundDateSheet = true;
                 else if (sheetName == AppValues.EXCEL_CONFIG_SHEET_NAME)
                     isFoundConfigSheet = true;
             }
             if (!isFoundDateSheet)
             {
-                errorString = string.Format("错误：{0}中不含有Sheet名为{1}的数据表", filePath, AppValues.EXCEL_DATA_SHEET_NAME.Replace("$", ""));
+                errorString = string.Format("错误：{0}中不含有Sheet名为{1}的数据表", filePath, AppValues.EXCEL_MY_SHEET_NAME.Replace("$", ""));
                 return null;
             }
 
             // 初始化适配器
             da = new OleDbDataAdapter();
-            da.SelectCommand = new OleDbCommand(String.Format("Select * FROM [{0}]", AppValues.EXCEL_DATA_SHEET_NAME), conn);
+            da.SelectCommand = new OleDbCommand(String.Format("Select * FROM [{0}]", AppValues.EXCEL_MY_SHEET_NAME), conn);
 
             ds = new DataSet();
-            da.Fill(ds, AppValues.EXCEL_DATA_SHEET_NAME);
+            da.Fill(ds, AppValues.EXCEL_MY_SHEET_NAME);
 
             // 删除表格末尾的空行
-            DataRowCollection rows = ds.Tables[AppValues.EXCEL_DATA_SHEET_NAME].Rows;
+            DataRowCollection rows = ds.Tables[AppValues.EXCEL_MY_SHEET_NAME].Rows;
             int rowCount = rows.Count;
             for (int i = rowCount - 1; i >= AppValues.DATA_FIELD_DATA_START_INDEX; --i)
             {
