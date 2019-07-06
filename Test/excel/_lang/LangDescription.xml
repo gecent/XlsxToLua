@@ -1,0 +1,12 @@
+<LangContent>
+
+    <LangElement File="test.xlsx">
+        <Field Name="name" />    
+        <Field Name="alias" />  
+	</LangElement>
+
+
+
+
+
+</LangContent>

@@ -1028,6 +1028,15 @@ public class Program
         if (isTableAllRight == true)
         {
             Utils.Log("\n表格检查完毕，没有发现错误，开始导出为lua文件\n");
+
+            LangDescriptionReader descReader = new LangDescriptionReader();
+            string descFilePath = "excel/_lang/LangDescription.xml";
+            string outputString = null;
+            if (descReader.ReadFile(descFilePath, out outputString))
+            {
+
+            }
+
             // 进行表格导出
             foreach (var item in AppValues.ExportTableNameAndPath)
             {
@@ -1080,6 +1089,23 @@ public class Program
                         Utils.LogErrorAndExit(errorString);
                     else
                         Utils.Log("额外导出为csv文件成功");
+                }
+                // 判断是否要额外导出为多语言lang目录中的csv文件
+                if (descReader.Contains(tableName))
+                {
+                    List<LangField> langFields = null;
+                    if (descReader.Description.TryGetValue(tableName, out langFields))
+                    {
+                        TableExportToLangCsvHelper.ExportTableToLangCsv(tableInfo, langFields, out errorString);
+                        if (errorString != null)
+                            Utils.LogErrorAndExit(errorString);
+                        else
+                            Utils.Log("额外导出为langcsv文件成功");
+                    }
+                    else
+                    {
+                        Utils.Log("额外导出为langcsv文件失败");
+                    }
                 }
                 // 判断是否要额外导出为csv对应C#类文件
                 if (AppValues.ExportCsClassTableNames.Contains(tableName))

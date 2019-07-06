@@ -2,9 +2,15 @@
 using System.Collections.Generic;
 using System.Text;
 
-public class TableExportToLangHelper
+public class TableExportToLangCsvHelper
 {
-    public static bool ExportTableToLang(TableInfo tableInfo, out string errorString)
+    public struct LangContent
+    {
+        public string LangKey;
+        public string LangValue;
+    }
+
+    public static bool ExportTableToLangCsv(TableInfo tableInfo, List<LangField> langFields, out string errorString)
     {
         // 存储每一行数据生成的csv文件内容
         List<StringBuilder> rowContentList = new List<StringBuilder>();

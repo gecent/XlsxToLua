@@ -357,6 +357,11 @@ public class AppValues
     public static bool IsExportKeepDirectoryStructure = false;
 
     /// <summary>
+    /// 新：用户输入的国际化描述文件所在路径
+    /// </summary>
+    public static string LangDescFilePath = null;
+
+    /// <summary>
     /// 用户输入的国际化文件所在路径
     /// </summary>
     public static string LangFilePath = null;
