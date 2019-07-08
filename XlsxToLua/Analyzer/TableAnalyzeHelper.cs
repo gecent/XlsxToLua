@@ -54,7 +54,10 @@ public class TableAnalyzeHelper
                 FieldCheckRule uniqueCheckRule = new FieldCheckRule();
                 uniqueCheckRule.CheckType = TableCheckType.Unique;
                 uniqueCheckRule.CheckRuleString = "unique";
-                TableCheckHelper.CheckUnique(primaryKeyField, uniqueCheckRule, out errorString);
+
+                // 我们的主键可以由几个列组成，需要根据多重关键字来检查唯一性。(TODO: 临时注释待迭代) By Matt 2019/7/8
+                //TableCheckHelper.CheckUnique(primaryKeyField, uniqueCheckRule, out errorString);
+
                 if (errorString != null)
                 {
                     errorString = _GetTableAnalyzeErrorString(tableName, 0) + "主键列存在重复错误\n" + errorString;
@@ -155,11 +158,16 @@ public class TableAnalyzeHelper
         fieldInfo.Desc = dt.Rows[AppValues.DATA_FIELD_DESC_INDEX][columnIndex].ToString().Trim().Replace(System.Environment.NewLine, " ").Replace('\n', ' ').Replace('\r', ' ').Replace('\t', ' ');
         // 字段所在列号
         fieldInfo.ColumnSeq = columnIndex;
-        // 检查规则字符串
-        string checkRuleString = dt.Rows[AppValues.DATA_FIELD_CHECK_RULE_INDEX][columnIndex].ToString().Trim().Replace(System.Environment.NewLine, " ").Replace('\n', ' ').Replace('\r', ' ').Replace('\t', ' ');
-        fieldInfo.CheckRule = string.IsNullOrEmpty(checkRuleString) ? null : checkRuleString;
-        // 导出到数据库中的字段名及类型
-        string databaseInfoString = dt.Rows[AppValues.DATA_FIELD_EXPORT_DATABASE_FIELD_INFO][columnIndex].ToString().Trim();
+
+        // 暂时没有检查规则，注释掉。 By Matt 2019/7/8
+        //// 检查规则字符串
+        //string checkRuleString = dt.Rows[AppValues.DATA_FIELD_CHECK_RULE_INDEX][columnIndex].ToString().Trim().Replace(System.Environment.NewLine, " ").Replace('\n', ' ').Replace('\r', ' ').Replace('\t', ' ');
+        //fieldInfo.CheckRule = string.IsNullOrEmpty(checkRuleString) ? null : checkRuleString;
+        fieldInfo.CheckRule = null;
+
+        //// 导出到数据库中的字段名及类型
+        //string databaseInfoString = dt.Rows[AppValues.DATA_FIELD_EXPORT_DATABASE_FIELD_INFO][columnIndex].ToString().Trim();
+        string databaseInfoString = null;
         if (string.IsNullOrEmpty(databaseInfoString))
         {
             fieldInfo.DatabaseFieldName = null;
@@ -181,6 +189,39 @@ public class TableAnalyzeHelper
         }
         // 引用父FileInfo
         fieldInfo.ParentField = parentField;
+
+        // 获得多重关键字 By Matt 2019/7/8
+        if (columnIndex == 0)
+        {
+            string multiKey = dt.Rows[AppValues.DATA_FIELD_MULTI_KEY_INDEX][columnIndex].ToString().Trim();
+            if (!string.IsNullOrEmpty(multiKey))
+            {
+                Utils.Log(string.Format("Analyze: 关键字 multiKey={0}", multiKey));
+
+                string[] tableKeys = multiKey.Split(',');
+                if (tableKeys != null && tableKeys.Length > 0)
+                {
+                    if (tableInfo.Keys == null)
+                    {
+                        tableInfo.Keys = new List<string>();
+                    }
+                    foreach (var itr in tableKeys)
+                    {
+                        tableInfo.Keys.Add(itr.Trim());
+                    }
+                }
+                else
+                {
+                    //errorString = "表格中至少需要一个关键字，当前值为" + multiKey;
+                }
+            }
+            else
+            {
+                errorString = "表格中至少需要一个关键字，并填写在单元格的A1";
+                nextFieldColumnIndex = columnIndex + 1;
+                return null;
+            }
+        }
 
         // 如果该字段是array类型的子元素，则不填写变量名（array下属元素的变量名自动顺序编号）
         // 并且如果子元素不是集合类型，也不需配置数据类型（直接使用array声明的子元素数据类型，子元素列不再单独配置），直接依次声明各子元素列

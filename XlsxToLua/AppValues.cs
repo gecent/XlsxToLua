@@ -248,12 +248,19 @@ public class AppValues
     /// </summary>
     public const string CONFIG_FILE_NAME = "config.txt";
 
+    // 我们的文件头几行意义不一样，修改之。 By Matt 2019/7/8
     // 每张数据表前五行分别声明字段描述、字段变量名、字段数据类型、字段检查规则、导出到数据库中的字段名及类型（行编号从0开始）
-    public const int DATA_FIELD_DESC_INDEX = 0;
-    public const int DATA_FIELD_NAME_INDEX = 1;
-    public const int DATA_FIELD_DATA_TYPE_INDEX = 2;
-    public const int DATA_FIELD_CHECK_RULE_INDEX = 3;
-    public const int DATA_FIELD_EXPORT_DATABASE_FIELD_INFO = 4;
+    //public const int DATA_FIELD_DESC_INDEX = 0; // 字段描述
+    //public const int DATA_FIELD_NAME_INDEX = 1; // 字段变量名
+    //public const int DATA_FIELD_DATA_TYPE_INDEX = 2; // 字段数据类型
+    //public const int DATA_FIELD_CHECK_RULE_INDEX = 3; // 字段检查规则
+    //public const int DATA_FIELD_EXPORT_DATABASE_FIELD_INFO = 4; // 导出到数据库中的字段名及类型
+    //public const int DATA_FIELD_DATA_START_INDEX = 5;
+    public const int DATA_FIELD_MULTI_KEY_INDEX = 0; // 多个关键字的描述，例如ID,Level 表示关键字由两个列组成
+    public const int DATA_FIELD_DATA_TYPE_INDEX = 1; // 字段数据类型
+    public const int DATA_FIELD_DESC_INDEX = 2; // 字段描述
+    public const int DATA_FIELD_EXPORT_TYPE = 3; // 是否导出，分为三种情况Client, Server, Both
+    public const int DATA_FIELD_NAME_INDEX = 4; // 字段变量名
     public const int DATA_FIELD_DATA_START_INDEX = 5;
 
     // 每张配置表中的一列为一个配置参数的声明，其中第一行声明参数名，其余行声明具体参数（行编号从0开始）
