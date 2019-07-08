@@ -60,7 +60,7 @@
     <Compile Include="Reader\LangDescriptionReader.cs" />
     <Compile Include="Writer\TableExportToLangLuaHelper.cs" />
     <Compile Include="Writer\TableExportToCsClassHelper.cs" />
-    <Compile Include="Writer\TableExportToLangCsvHelper.cs" />
+    <Compile Include="Writer\TableExportToLangFileHelper.cs" />
     <Compile Include="Writer\TableExportToCsvHelper.cs" />
     <Compile Include="Writer\TableExportToJavaClassHelper.cs" />
     <Compile Include="Writer\TableExportToJsonHelper.cs" />

@@ -1029,7 +1029,7 @@ public class Program
         {
             Utils.Log("\n表格检查完毕，没有发现错误，开始导出为lua文件\n");
 
-            TableExportToLangCsvHelper.LangContents.Clear();
+            TableExportToLangFileHelper.LangContents.Clear();
             LangDescriptionReader descReader = new LangDescriptionReader();
             string descFilePath = AppValues.ExcelFolderPath + "/_lang/LangDescription.xml";
             Utils.Log(string.Format("默认的Description所在路径：{0}", descFilePath));
@@ -1102,7 +1102,7 @@ public class Program
                     List<LangField> langFields = null;
                     if (descReader.Description.TryGetValue(tableName, out langFields))
                     {
-                        TableExportToLangCsvHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
+                        TableExportToLangFileHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
                         if (errorString != null)
                         {
                             Utils.LogErrorAndExit(errorString);
@@ -1167,7 +1167,7 @@ public class Program
             }
 
             // 保存Lang.csv文件
-            TableExportToLangCsvHelper.SaveLangCsvFile();
+            TableExportToLangFileHelper.SaveLangFile();
         }
         else
         {
