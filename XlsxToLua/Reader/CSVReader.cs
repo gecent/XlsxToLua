@@ -6,6 +6,29 @@ using System.IO;
 
 public class CSVReader
 {
+    //public static char CsvSplitString = ',';
+    public static char CsvSplitString = '\t';
+
+    private List<string> m_ListName;
+    public List<string> ListName { get { return m_ListName; } }
+
+    private List<List<string>> m_ListLines;
+
+    public Int32 Count { get { return m_ListLines.Count; } }
+
+    private string fileName;
+    public string FileName
+    {
+        get
+        {
+            return fileName;
+        }
+        set
+        {
+            fileName = FileName;
+            ReadFile(fileName);
+        }
+    }
     public CSVReader()
     {
     }
@@ -27,10 +50,10 @@ public class CSVReader
             line = sr.ReadLine();       //第二行名字
             if (line != null)
             {
-                listName = ParseLine(line);
+                m_ListName = ParseLine(line);
             }
 
-            listLines = new List<List<string>>();
+            m_ListLines = new List<List<string>>();
             while ((line = sr.ReadLine()) != null)
             {
                 List<String> list = ParseLine(line);
@@ -38,7 +61,7 @@ public class CSVReader
                 {
                     if (s != "")
                     {
-                        listLines.Add(ParseLine(line));
+                        m_ListLines.Add(ParseLine(line));
                         break;
                     }
                 }
@@ -49,7 +72,7 @@ public class CSVReader
 
     public List<string> GetLine(Int32 index)
     {
-        return listLines[index];
+        return m_ListLines[index];
     }
 
     public string GetString(Int32 index, string name)
@@ -57,9 +80,9 @@ public class CSVReader
         List<string> list = GetLine(index);
         if (list != null)
         {
-            for (int i = 0; i < listName.Count; ++i)
+            for (int i = 0; i < m_ListName.Count; ++i)
             {
-                if (listName[i] == name)
+                if (m_ListName[i] == name)
                 {
                     return list[i];
                 }
@@ -81,7 +104,7 @@ public class CSVReader
                 {
                     InDoubleQuotationMark = true;
                 }
-                else if (line[i] == ',')
+                else if (line[i] == CsvSplitString)
                 {
                     list.Add(builder.ToString());
                     builder.Remove(0, builder.Length);
@@ -313,23 +336,5 @@ public class CSVReader
         return true;
     }
 
-    List<string> listName;
-    List<List<string>> listLines;
-
-    public Int32 Count { get { return listLines.Count; } }
-
-    private string fileName;
-    public string FileName
-    {
-        get
-        {
-            return fileName;
-        }
-        set
-        {
-            fileName = FileName;
-            ReadFile(fileName);
-        }
-    }
 
 }

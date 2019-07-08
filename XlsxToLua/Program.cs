@@ -35,6 +35,8 @@ public class Program
     /// 14) 声明要将指定的Excel表导出为json文件需要以下2个参数：
     ///     -exportJson（后面在英文小括号内声明本次要额外导出json文件的Excel文件名，用|分隔，或者用$all表示全部。注意如果-part参数中未指定本次要导出某个Excel表，即便声明要导出json文件也不会生效）
     ///     -exportJsonParam（可声明导出json文件的参数）
+    /// new args:
+    /// 15) -exportLangLua (后面英语小写参数分别可以为cn, en, tw, jp等)
     /// </summary>
     static int Main(string[] args)
     {
@@ -42,24 +44,35 @@ public class Program
 
         // 检查第1个参数（Excel表格所在目录）是否正确
         if (args.Length < 1)
+        {
             Utils.LogErrorAndExit("错误：未输入Excel表格所在目录");
+        }
         if (!Directory.Exists(args[0]))
+        {
             Utils.LogErrorAndExit(string.Format("错误：输入的Excel表格所在目录不存在，路径为{0}", args[0]));
+        }
 
         AppValues.ExcelFolderPath = Path.GetFullPath(args[0]);
         Utils.Log(string.Format("选择的Excel所在路径：{0}", AppValues.ExcelFolderPath));
 
         // 检查第2个参数（存放导出lua文件的目录）是否正确
         if (args.Length < 2)
+        {
             Utils.LogErrorAndExit("错误：未输入要将生成lua文件存放的路径");
+        }
         if (!Directory.Exists(args[1]))
+        {
             Utils.LogErrorAndExit(string.Format("错误：输入的lua文件导出路径不存在，路径为{0}", args[1]));
+        }
 
         AppValues.ExportLuaFilePath = Path.GetFullPath(args[1]);
         Utils.Log(string.Format("选择的lua文件导出路径：{0}", AppValues.ExportLuaFilePath));
+
         // 检查第3个参数（项目Client目录的路径）是否正确
         if (args.Length < 3)
+        {
             Utils.LogErrorAndExit("错误：未输入项目Client目录的路径，如果不需要请输入参数-noClient");
+        }
         if (AppValues.NO_CLIENT_PATH_STRING.Equals(args[2], StringComparison.CurrentCultureIgnoreCase))
         {
             Utils.LogWarning("警告：你选择了不指定Client文件夹路径，则本工具无法检查表格中填写的图片路径等对应的文件是否存在");
@@ -71,11 +84,15 @@ public class Program
             Utils.Log(string.Format("Client目录完整路径：{0}", AppValues.ClientPath));
         }
         else
+        {
             Utils.LogErrorAndExit(string.Format("错误：请检查输入的Client路径是否正确{0}", args[2]));
+        }
 
         // 检查第4个参数（lang文件路径）是否正确
         if (args.Length < 4)
+        {
             Utils.LogErrorAndExit("错误：未输入lang文件路径或未声明不含lang文件（使用-noLang）");
+        }
         if (AppValues.NO_LANG_PARAM_STRING.Equals(args[3], StringComparison.CurrentCultureIgnoreCase))
         {
             AppValues.LangFilePath = null;
@@ -93,7 +110,44 @@ public class Program
                 Utils.LogErrorAndExit(errorString);
         }
         else
+        {
             Utils.LogErrorAndExit(string.Format("错误：输入的lang文件不存在，路径为{0}", args[3]));
+        }
+
+        // 检查第5个参数，导出Lua语言版本
+        if (args.Length < 5)
+        {
+            Utils.LogWarning("错误：未输入导出LangTable.lua文件所需的多语言种类");
+        }
+        string langLuaParam = args[4];
+        if (langLuaParam.StartsWith(AppValues.LANG_LUA_PARAM_STRING, StringComparison.CurrentCultureIgnoreCase))
+        {
+            AppValues.LangLuaFileType = langLuaParam.Substring(AppValues.LANG_LUA_PARAM_STRING.Length).Trim().ToLower();
+            Utils.Log(string.Format("导出LangTable.lua多语言种类={0}", AppValues.LangLuaFileType));
+        }
+        else
+        {
+            Utils.LogWarning(string.Format("导出LangTable.lua所需参数解析有误：{0}", langLuaParam));
+        }
+
+        // 开始导出LangTable.lua
+        if (!string.IsNullOrEmpty(AppValues.LangLuaFileType))
+        {
+
+            string errorString = null;
+            TableExportToLangLuaHelper.ExportTableToLangLua(out errorString);
+            if (errorString != null)
+            {
+                Utils.LogErrorAndExit(errorString);
+            }
+            else
+            {
+                Utils.Log("导出LangTable.lua文件成功");
+            }
+
+            return errorLevel;
+        }
+
 
         // 生成Excel文件夹中所有表格文件信息
         List<string> existExcelFileNames = new List<string>();

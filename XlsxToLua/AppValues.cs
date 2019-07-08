@@ -64,6 +64,11 @@ public class AppValues
     public const string LANG_NOT_MATCHING_PRINT_PARAM_STRING = "-printEmptyStringWhenLangNotMatching";
 
     /// <summary>
+    /// 导出LangLua文件，后续可以接参数：cn, en, tw, jp等
+    /// </summary>
+    public const string LANG_LUA_PARAM_STRING = "-exportLangLua";
+
+    /// <summary>
     /// 声明只将部分指定Excel表进行导出的命令参数
     /// </summary>
     public const string PART_EXPORT_PARAM_STRING = "-part";
@@ -372,6 +377,11 @@ public class AppValues
     /// 用户输入的国际化文件所在路径
     /// </summary>
     public static string LangFilePath = null;
+    
+    /// <summary>
+    /// 国际化文件子路径
+    /// </summary>
+    public static string LangLuaFileType = null;
 
     /// <summary>
     /// 用户输入的Client目录所在路径

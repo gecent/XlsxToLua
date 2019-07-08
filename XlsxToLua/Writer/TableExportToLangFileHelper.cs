@@ -6,6 +6,7 @@ using System.Text;
 public class TableExportToLangFileHelper
 {
     public static Dictionary<string, string> LangContents = new Dictionary<string, string>();
+    public const string LangFileKeyNameString = "ID";
     public const string LangKeySplitString = "_";
     public const string LangFileSplitString = "\t";
     public const string LangFileName = "LangTable.txt";
@@ -29,7 +30,7 @@ public class TableExportToLangFileHelper
                 return false;
             }
 
-            string langKeyPrefix = string.Format("{0}{1}{2}{3}", LangKeySplitString, tableInfo.TableName, LangKeySplitString, fieldName);
+            string langKeyPrefix = string.Format("{0}{1}{2}{3}", LangKeySplitString, tableInfo.TableName.ToUpper(), LangKeySplitString, fieldName.ToUpper());
 
             for (int row = 0; row < rowCount; ++row)
             {
@@ -69,7 +70,7 @@ public class TableExportToLangFileHelper
             {
                 FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(itr);
                 valueString += LangKeySplitString;
-                valueString += fieldInfo.Data[row].ToString();
+                valueString += fieldInfo.Data[row].ToString().ToUpper();
             }
         }
         else
@@ -78,7 +79,7 @@ public class TableExportToLangFileHelper
             if (keyColumnFieldInfo != null)
             {
                 valueString += LangKeySplitString;
-                valueString += keyColumnFieldInfo.Data[row].ToString();
+                valueString += keyColumnFieldInfo.Data[row].ToString().ToUpper();
             }
         }
 
@@ -95,7 +96,7 @@ public class TableExportToLangFileHelper
             {
                 // 最上两行
                 writer.WriteLine(string.Format("{0}{1}{2}", "索引", LangFileSplitString, "中文"));
-                writer.WriteLine(string.Format("{0}{1}{2}", "id", LangFileSplitString, "cn"));
+                writer.WriteLine(string.Format("{0}{1}{2}", LangFileKeyNameString, LangFileSplitString, "CN"));
 
                 foreach (var itr in LangContents)
                 {

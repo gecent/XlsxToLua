@@ -506,6 +506,30 @@ public class Utils
         }
     }
 
+    /// <summary>
+    /// 将某张Excel表格转换为lua table内容保存到文件
+    /// </summary>
+    public static bool SaveLangLuaFile(string relativePath, string fileName, string content)
+    {
+        try
+        {
+            string filePath = string.Format("{0}/lang/{1}", AppValues.ExportLuaFilePath, relativePath);
+            if (Directory.Exists(filePath) == false)
+                Directory.CreateDirectory(filePath);
+
+            string savePath = Utils.CombinePath(filePath, fileName + ".lua");
+            StreamWriter writer = new StreamWriter(savePath, false, new UTF8Encoding(false));
+            writer.Write(content);
+            writer.Flush();
+            writer.Close();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static bool SaveCsvFile(string tableName, List<StringBuilder> rowContentList)
     {
         try
