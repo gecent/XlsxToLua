@@ -5,8 +5,8 @@ using System.IO;
 
 public struct LangField
 {
-    public string Name; // Read from Description
-    public string OldName; // Read from Description
+    public string FieldName; // Read from Description
+    public string FieldOldName; // Read from Description
 }
 
 public class LangDescriptionReader
@@ -56,12 +56,8 @@ public class LangDescriptionReader
                             return false;
                         }
 
-                        string fileName = filePath;
-                        if (filePath.Contains("/"))
-                        {
-                            int index = filePath.LastIndexOf("/");
-                            fileName = filePath.Substring(index);
-                        }
+                        string fileName = Path.GetFileNameWithoutExtension(filePath);
+
                         if (m_Description.ContainsKey(fileName))
                         {
                             m_FilePaths.Clear();
@@ -77,10 +73,12 @@ public class LangDescriptionReader
                             if (subReader.Name == "Field" && subReader.NodeType == XmlNodeType.Element)
                             {
                                 LangField field = new LangField();
-                                field.Name = reader.GetAttribute("Name");
-                                field.OldName = reader.GetAttribute("OldName");
+                                field.FieldName = reader.GetAttribute("Name");
+                                field.FieldOldName = reader.GetAttribute("OldName");
 
                                 listField.Add(field);
+
+                                Utils.Log(string.Format("LangField: path={0} file={1} field={2}", filePath, fileName, field.FieldName));
                             }
                         }
                         m_FilePaths.Add(filePath);

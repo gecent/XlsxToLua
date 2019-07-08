@@ -16,6 +16,9 @@ public class TableExportToCsvHelper
         {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.Append(keyColumnFieldInfo.Data[row]);
+
+            //Utils.Log(string.Format("row i={0}, content={1}", row, stringBuilder.ToString()));
+
             rowContentList.Add(stringBuilder);
         }
         // 生成其他列的内容（将array、dict这样的集合类型下属字段作为独立字段处理）

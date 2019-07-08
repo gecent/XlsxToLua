@@ -1,15 +1,85 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 public class TableExportToLangCsvHelper
 {
-    public struct LangContent
+    public static Dictionary<string, string> LangContents = new Dictionary<string, string>();
+
+    public static bool ExportTableToLangContent(TableInfo tableInfo, List<LangField> langFields, out string errorString)
     {
-        public string LangKey;
-        public string LangValue;
+        errorString = null;
+
+        // 主键列，用来生成LangKey
+        FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
+        int rowCount = keyColumnFieldInfo.Data.Count;
+
+        for (int i = 0; i < langFields.Count; ++i)
+        {
+            string fieldName = langFields[i].FieldName;
+            FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(fieldName);
+            if (fieldInfo == null)
+            {
+                errorString = string.Format("生成Lang.csv，但找不到{0}中的{1}项", tableInfo.TableName, fieldName);
+                return false;
+            }
+
+            string langKeyPrefix = string.Format("_{0}_{1}", tableInfo.TableName, fieldName);
+
+            for (int row = 0; row < rowCount; ++row)
+            {
+                string langKey = string.Format("{0}_{1}", langKeyPrefix, GetKeyFieldValueString(tableInfo, row));
+                string langValue = fieldInfo.Data[row].ToString();
+
+                LangContents.Add(langKey, langValue);
+
+                Utils.Log(string.Format("Lang: key={0} value={1}", langKey, langValue));
+            }
+        }
+
+        return false;
+    }
+    public static string GetKeyFieldValueString(TableInfo tableInfo, int row)
+    {
+        FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
+        string valueString = string.Empty;
+        if (keyColumnFieldInfo != null)
+        {
+            valueString += keyColumnFieldInfo.Data[row].ToString();
+        }
+
+        return valueString;
     }
 
+    public static bool SaveLangCsvFile()
+    {
+        if (LangContents.Count > 0)
+        {
+            string savePath = AppValues.ExcelFolderPath + "/_lang/cn/LangTable.csv";
+            using (StreamWriter writer = new StreamWriter(savePath, false, new UTF8Encoding(false)))
+            {
+                // 最上两行
+                writer.WriteLine("索引,中文");
+                writer.WriteLine("id,cn");
+
+                foreach (var itr in LangContents)
+                {
+                    StringBuilder stringBuilder = new StringBuilder();
+
+                    stringBuilder.Append(itr.Key);
+                    stringBuilder.Append(",");
+                    stringBuilder.Append(itr.Value);
+
+                    writer.WriteLine(stringBuilder);
+                }
+
+                writer.Flush();
+            }
+        }
+
+        return true;
+    }
     public static bool ExportTableToLangCsv(TableInfo tableInfo, List<LangField> langFields, out string errorString)
     {
         // 存储每一行数据生成的csv文件内容

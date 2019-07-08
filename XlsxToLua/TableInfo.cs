@@ -132,6 +132,11 @@ public class FieldInfo
         ExtraParam = new Dictionary<string, object>();
         IsIgnoreClientExport = false;
     }
+
+    public override string ToString()
+    {
+        return string.Format("Field: tableName={0} fieldName={1} dataType={2} desc={3} column={4}", this.TableName, this.FieldName, this.DataTypeString, this.Desc, this.ColumnSeq);
+    }
 }
 
 /// <summary>

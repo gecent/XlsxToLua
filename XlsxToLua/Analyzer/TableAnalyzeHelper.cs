@@ -418,7 +418,10 @@ public class TableAnalyzeHelper
         }
 
         if (errorString == null)
+        {
+            //Utils.Log(fieldInfo.ToString());
             return fieldInfo;
+        }
         else
             return null;
     }

@@ -1029,12 +1029,18 @@ public class Program
         {
             Utils.Log("\n表格检查完毕，没有发现错误，开始导出为lua文件\n");
 
+            TableExportToLangCsvHelper.LangContents.Clear();
             LangDescriptionReader descReader = new LangDescriptionReader();
-            string descFilePath = "excel/_lang/LangDescription.xml";
+            string descFilePath = AppValues.ExcelFolderPath + "/_lang/LangDescription.xml";
+            Utils.Log(string.Format("默认的Description所在路径：{0}", descFilePath));
             string outputString = null;
             if (descReader.ReadFile(descFilePath, out outputString))
             {
-
+                Utils.Log("读取Description文件正确");
+            }
+            else
+            {
+                Utils.LogError(outputString);
             }
 
             // 进行表格导出
@@ -1096,15 +1102,19 @@ public class Program
                     List<LangField> langFields = null;
                     if (descReader.Description.TryGetValue(tableName, out langFields))
                     {
-                        TableExportToLangCsvHelper.ExportTableToLangCsv(tableInfo, langFields, out errorString);
+                        TableExportToLangCsvHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
                         if (errorString != null)
+                        {
                             Utils.LogErrorAndExit(errorString);
+                        }
                         else
-                            Utils.Log("额外导出为langcsv文件成功");
+                        {
+                            //Utils.Log("额外导出为lang.csv文件成功");
+                        }
                     }
                     else
                     {
-                        Utils.Log("额外导出为langcsv文件失败");
+                        Utils.Log("额外导出为lang.csv文件失败");
                     }
                 }
                 // 判断是否要额外导出为csv对应C#类文件
@@ -1155,6 +1165,9 @@ public class Program
 
                 Utils.Log("\n导出到数据库完毕\n");
             }
+
+            // 保存Lang.csv文件
+            TableExportToLangCsvHelper.SaveLangCsvFile();
         }
         else
         {
