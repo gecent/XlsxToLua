@@ -32,14 +32,58 @@ public class TableExportToLuaHelper
         StringBuilder content = new StringBuilder();
 
         string className = string.Format("record_{0}", tableInfo.TableName.ToLower());
+        string dataName = string.Format("{0}", tableInfo.TableName.ToLower());
 
 
 
         // 生成数据内容开头
         content.AppendFormat("----@classdef {0}", className);
         content.AppendLine();
-        content.AppendFormat("local {0} = {}", className);
+        content.AppendFormat("local {0} = ", className);
+        content.Append("{}");
         content.AppendLine();
+        content.AppendLine();
+        content.AppendLine();
+
+        // 生成数据内容：变量部分
+        List<FieldInfo> allField = tableInfo.GetAllClientFieldInfo();
+        for (int column = 0; column < allField.Count; ++column)
+        {
+            FieldInfo fieldInfo = allField[column];
+            string defalutValue = GetDefaultValueByType(fieldInfo.DataType);
+            content.AppendFormat("{0}.{1} = {2}--{3}", className, fieldInfo.FieldName, defalutValue, fieldInfo.Desc);
+            content.AppendLine();
+        }
+        content.AppendLine();
+
+        // 生成数据内容：数据部分
+        content.AppendFormat("local {0} = ", dataName);
+        content.Append("{");
+        content.AppendLine();
+        content.AppendLine("   _data = {");
+
+        int dataCount = tableInfo.GetKeyColumnFieldInfo().Data.Count;
+        for (int row = 0; row < dataCount; ++row)
+        {
+            content.AppendFormat("    [{0}] = ", row);
+            content.Append("{");
+
+            for (int column = 0; column < allField.Count; ++column)
+            {
+                FieldInfo fieldInfo = allField[column];
+                content.AppendFormat("{0},", fieldInfo.Data[row].ToString());
+            }
+
+            content.Append("},");
+            content.AppendLine();
+        }
+        content.AppendLine("   }");
+        content.AppendLine("}");
+        content.AppendLine();
+
+        // 生成数据内容：index_key
+
+
 
         // 当前缩进量
         int currentLevel = 1;
@@ -51,6 +95,27 @@ public class TableExportToLuaHelper
 
         errorString = "保存为lua文件失败\n";
         return false;
+    }
+
+    private static string GetDefaultValueByType(DataType dataType)
+    {
+        string ret = "\"\"";
+        switch (dataType)
+        {
+            case DataType.Int:
+            case DataType.Long:
+            case DataType.Float:
+                ret = "0";
+                break;
+            case DataType.Bool:
+                ret = "false";
+                break;
+            case DataType.String:
+                ret = "\"\"";
+                break;
+        }
+
+        return ret;
     }
 
     /// <summary>
