@@ -6,15 +6,15 @@ using System.IO;
 
 public class CSVReader
 {
-    //public static char CsvSplitString = ',';
-    public static char CsvSplitString = '\t';
+    //public static char FileDelimiterString = ',';
+    public static char FileDelimiterString = '\t';
 
     private List<string> m_ListName;
     public List<string> ListName { get { return m_ListName; } }
 
     private List<List<string>> m_ListLines;
 
-    public Int32 Count { get { return m_ListLines.Count; } }
+    public int Count { get { return m_ListLines.Count; } }
 
     private string fileName;
     public string FileName
@@ -44,7 +44,7 @@ public class CSVReader
         {
             return;
         }
-        using (StreamReader sr = new StreamReader(fileName, Encoding.GetEncoding(936)))
+        using (StreamReader sr = new StreamReader(fileName, new UTF8Encoding(false)))
         {
             String line = sr.ReadLine(); //第一行注释不处理
             line = sr.ReadLine();       //第二行名字
@@ -70,12 +70,12 @@ public class CSVReader
 
     }
 
-    public List<string> GetLine(Int32 index)
+    public List<string> GetLine(int index)
     {
         return m_ListLines[index];
     }
 
-    public string GetString(Int32 index, string name)
+    public string GetString(int index, string name)
     {
         List<string> list = GetLine(index);
         if (list != null)
@@ -91,6 +91,17 @@ public class CSVReader
         return "null";
     }
 
+    public string GetStringByColumn(int index, int column)
+    {
+        var line = GetLine(index);
+        string content = "null";
+        if (column >= 0 && column < line.Count)
+        {
+            content = line[column];
+        }
+        return content;
+    }
+
     private static List<String> ParseLine(String line)
     {
         bool InDoubleQuotationMark = false;
@@ -104,7 +115,7 @@ public class CSVReader
                 {
                     InDoubleQuotationMark = true;
                 }
-                else if (line[i] == CsvSplitString)
+                else if (line[i] == FileDelimiterString)
                 {
                     list.Add(builder.ToString());
                     builder.Remove(0, builder.Length);
@@ -145,13 +156,13 @@ public class CSVReader
         return list;
     }
 
-    public bool GetValueAsString(Int32 index, string name, out String value)
+    public bool GetValueAsString(int index, string name, out String value)
     {
         value = GetString(index, name);
         return value != "null";
     }
 
-    public bool GetValueAsInt32(Int32 index, string name, out Int32 value)
+    public bool GetValueAsInt32(int index, string name, out int value)
     {
         String str = GetString(index, name);
         value = 0;
@@ -174,7 +185,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsLong(Int32 index, string name, out long value)
+    public bool GetValueAsLong(int index, string name, out long value)
     {
         String str = GetString(index, name);
         value = 0;
@@ -197,7 +208,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsFloat(Int32 index, string name, out float value)
+    public bool GetValueAsFloat(int index, string name, out float value)
     {
         String str = GetString(index, name);
         value = 0;
@@ -220,7 +231,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsListInt32(Int32 index, string name, List<Int32> list)
+    public bool GetValueAsListint(int index, string name, List<int> list)
     {
         list.Clear();
 
@@ -243,7 +254,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsListFloat(Int32 index, string name, List<float> list)
+    public bool GetValueAsListFloat(int index, string name, List<float> list)
     {
         list.Clear();
 
@@ -266,7 +277,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsListString(Int32 index, string name, List<String> list)
+    public bool GetValueAsListString(int index, string name, List<String> list)
     {
         list.Clear();
 
@@ -285,7 +296,7 @@ public class CSVReader
         }
     }
 
-    public bool GetValueAsDictionInt32Int32(Int32 index, String name, Dictionary<Int32, Int32> diction)
+    public bool GetValueAsDictionInt32Int32(int index, String name, Dictionary<int, int> diction)
     {
         diction.Clear();
         String s = GetString(index, name);
@@ -303,8 +314,8 @@ public class CSVReader
         foreach (String sitem in tmp.Split(new String[] { "><" }, StringSplitOptions.RemoveEmptyEntries))
         {
             String[] keyValue = sitem.Split(new Char[] { ',' });
-            Int32 key = Convert.ToInt32(keyValue[0]);
-            Int32 value = Convert.ToInt32(keyValue[1]);
+            int key = Convert.ToInt32(keyValue[0]);
+            int value = Convert.ToInt32(keyValue[1]);
 
             diction.Add(key, value);
         }
@@ -312,7 +323,7 @@ public class CSVReader
         return true;
     }
 
-    public bool GetValueAsDictionStringString(Int32 index, String name, Dictionary<String, String> diction)
+    public bool GetValueAsDictionStringString(int index, String name, Dictionary<String, String> diction)
     {
         diction.Clear();
         String s = GetString(index, name);

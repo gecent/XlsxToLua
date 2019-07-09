@@ -6,9 +6,9 @@ using System.Text;
 public class TableExportToLangFileHelper
 {
     public static Dictionary<string, string> LangContents = new Dictionary<string, string>();
+    public const string LangKeyDelimiterString = "_";
+    public const string LangFileDelimiterString = "\t";
     public const string LangFileKeyNameString = "ID";
-    public const string LangKeySplitString = "_";
-    public const string LangFileSplitString = "\t";
     public const string LangFileName = "LangTable.txt";
 
 
@@ -30,14 +30,16 @@ public class TableExportToLangFileHelper
                 return false;
             }
 
-            string langKeyPrefix = string.Format("{0}{1}{2}{3}", LangKeySplitString, tableInfo.TableName.ToUpper(), LangKeySplitString, fieldName.ToUpper());
+            string langKeyPrefix = GetLangKeyPrefix(tableInfo, fieldName);
 
             for (int row = 0; row < rowCount; ++row)
             {
-                string langKey = string.Format("{0}{1}", langKeyPrefix, GetKeyFieldValueString(tableInfo, row));
+                string langKey = string.Format("{0}{1}", langKeyPrefix, GetLangKeyString(tableInfo, row));
                 string langValue = fieldInfo.Data[row].ToString();
 
-                if (!langValue.StartsWith(langKeyPrefix))
+                // 如果文本内容为空，则不导出
+                // 如果是_开头的索引值，则不导出
+                if (!string.IsNullOrEmpty(langValue) && !langValue.StartsWith(langKeyPrefix))
                 {
                     string lastLangValue;
                     if (LangContents.TryGetValue(langKey, out lastLangValue))
@@ -60,8 +62,12 @@ public class TableExportToLangFileHelper
 
         return false;
     }
-
-    public static string GetKeyFieldValueString(TableInfo tableInfo, int row)
+    public static string GetLangKeyPrefix(TableInfo tableInfo, string fieldName)
+    {
+        string langKeyPrefix = string.Format("{0}{1}{2}{3}", LangKeyDelimiterString, tableInfo.TableName.ToUpper(), LangKeyDelimiterString, fieldName.ToUpper());
+        return langKeyPrefix;
+    }
+    public static string GetLangKeyString(TableInfo tableInfo, int row)
     {
         string valueString = string.Empty;
         if (tableInfo.Keys != null && tableInfo.Keys.Count > 0)
@@ -69,7 +75,7 @@ public class TableExportToLangFileHelper
             foreach(string itr in tableInfo.Keys)
             {
                 FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(itr);
-                valueString += LangKeySplitString;
+                valueString += LangKeyDelimiterString;
                 valueString += fieldInfo.Data[row].ToString().ToUpper();
             }
         }
@@ -78,7 +84,7 @@ public class TableExportToLangFileHelper
             FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
             if (keyColumnFieldInfo != null)
             {
-                valueString += LangKeySplitString;
+                valueString += LangKeyDelimiterString;
                 valueString += keyColumnFieldInfo.Data[row].ToString().ToUpper();
             }
         }
@@ -95,15 +101,15 @@ public class TableExportToLangFileHelper
             using (StreamWriter writer = new StreamWriter(savePath, false, new UTF8Encoding(false)))
             {
                 // 最上两行
-                writer.WriteLine(string.Format("{0}{1}{2}", "索引", LangFileSplitString, "中文"));
-                writer.WriteLine(string.Format("{0}{1}{2}", LangFileKeyNameString, LangFileSplitString, "CN"));
+                writer.WriteLine(string.Format("{0}{1}{2}", "索引", LangFileDelimiterString, "中文"));
+                writer.WriteLine(string.Format("{0}{1}{2}", LangFileKeyNameString, LangFileDelimiterString, "CN"));
 
                 foreach (var itr in LangContents)
                 {
                     StringBuilder stringBuilder = new StringBuilder();
 
                     stringBuilder.Append(itr.Key);
-                    stringBuilder.Append(LangFileSplitString);
+                    stringBuilder.Append(LangFileDelimiterString);
                     stringBuilder.Append(itr.Value);
 
                     writer.WriteLine(stringBuilder);

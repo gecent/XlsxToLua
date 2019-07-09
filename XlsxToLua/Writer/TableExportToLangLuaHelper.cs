@@ -7,21 +7,7 @@ using System.Text;
 public class TableExportToLangLuaHelper
 {
     // Lua文件名
-    private const string _LangLuaFileName = "LangTable";
-    // 用于缩进lua table的字符串
-    private static string _LUA_TABLE_INDENTATION_STRING = "\t";
-
-    // 生成lua文件上方字段描述的配置
-    // 每行开头的lua注释声明
-    private static string _COMMENT_OUT_STRING = "-- ";
-    // 变量名、数据类型、描述声明之间的间隔字符串
-    private static string _DEFINE_INDENTATION_STRING = "   ";
-    // dict子元素相对于父dict变量名声明的缩进字符串
-    private static string _DICT_CHILD_INDENTATION_STRING = "   ";
-    // 变量名声明所占的最少字符数
-    private static int _FIELD_NAME_MIN_LENGTH = 30;
-    // 数据类型声明所占的最少字符数
-    private static int _FIELD_DATA_TYPE_MIN_LENGTH = 30;
+    public const string LangLuaFileName = "LangTable";
 
     public static bool ExportTableToLangLua(out string errorString)
     {
@@ -35,21 +21,29 @@ public class TableExportToLangLuaHelper
         CSVReader csvReader = new CSVReader(readLangFilePath);
 
         // 选取需要的列
-        int langKeyIndex = -1, langValueIndex = -1;
+        int langKeyIndex = -1, langValueIndex = -1, otherIndex = -1;
+        string relativePath = string.Format("_lang/{0}/{1}", AppValues.LangLuaFileType, TableExportToLangFileHelper.LangFileName);
         for (int index = 0; index < csvReader.ListName.Count; ++index)
         {
-            if (csvReader.ListName[index].Equals(TableExportToLangFileHelper.LangFileKeyNameString, StringComparison.CurrentCultureIgnoreCase))
+            string keyName = csvReader.ListName[index];
+            Utils.Log(string.Format("多语言表格{0}中的列名{1}: {2}", relativePath, index, keyName));
+
+            if (keyName.Equals(TableExportToLangFileHelper.LangFileKeyNameString, StringComparison.CurrentCultureIgnoreCase))
             {
                 langKeyIndex = index;
             }
-            else if (csvReader.ListName[index].Equals(AppValues.LangLuaFileType, StringComparison.CurrentCultureIgnoreCase))
+            else if (keyName.Equals(AppValues.LangLuaFileType, StringComparison.CurrentCultureIgnoreCase))
             {
                 langValueIndex = index;
+            }
+            else
+            {
+                otherIndex = index;
             }
         }
         if (langKeyIndex == -1 || langValueIndex == -1)
         {
-            errorString = string.Format("找不到多语言表格中的两列：{0}和{1}", TableExportToLangFileHelper.LangFileKeyNameString, AppValues.LangLuaFileType);
+            errorString = string.Format("多语言表格中找不到期望的列名：{0}, {1}", TableExportToLangFileHelper.LangFileKeyNameString, AppValues.LangLuaFileType);
             return false;
         }
 
@@ -63,31 +57,27 @@ public class TableExportToLangLuaHelper
         content.AppendLine("-- Please don't revise this file munually.");
         content.AppendLine("----------------------------------------");
         content.AppendLine("");
-        content.AppendLine("    local LangTable =");
-        content.AppendLine("    {");
-
-        // 当前缩进量
-        int currentLevel = 1;
+        content.AppendLine("local LangTable = {");
 
         for (int row = 0; row < csvReader.Count; ++row)
         {
             // 将主键列作为key生成
-            content.Append(_GetLuaTableIndentation(currentLevel));
-
-            content.Append(csvReader.GetString(row, TableExportToLangFileHelper.LangFileKeyNameString));
-            content.Append(" = \"");
-            content.Append(csvReader.GetString(row, AppValues.LangLuaFileType));
-            content.AppendLine("\"");
+            content.Append("    [\"");
+            content.Append(csvReader.GetStringByColumn(row, langKeyIndex));
+            content.Append("\"] = \"");
+            content.Append(csvReader.GetStringByColumn(row, langValueIndex));
+            content.AppendLine("\",");
         }
 
         // 生成数据内容结尾
-        content.AppendLine("    }");
-        content.AppendLine("    return LangTable");
+        content.AppendLine("}");
+        content.AppendLine("");
+        content.AppendLine("return LangTable");
 
         string exportString = content.ToString();
         
         // 保存为lua文件
-        if (Utils.SaveLangLuaFile(AppValues.LangLuaFileType, _LangLuaFileName, exportString) == true)
+        if (Utils.SaveLangLuaFile(AppValues.LangLuaFileType, LangLuaFileName, exportString) == true)
         {
             errorString = null;
             return true;
@@ -98,13 +88,5 @@ public class TableExportToLangLuaHelper
             return false;
         }
     }
-
-    private static string _GetLuaTableIndentation(int level)
-    {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < level; ++i)
-            stringBuilder.Append(_LUA_TABLE_INDENTATION_STRING);
-
-        return stringBuilder.ToString();
-    }
+    
 }

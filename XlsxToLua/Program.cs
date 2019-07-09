@@ -130,20 +130,10 @@ public class Program
             Utils.LogWarning(string.Format("导出LangTable.lua所需参数解析有误：{0}", langLuaParam));
         }
 
-        // 开始导出LangTable.lua
-        if (!string.IsNullOrEmpty(AppValues.LangLuaFileType))
+        // 开始导出多语言LangTable.lua （中文的默认在最后导出）
+        if (!string.IsNullOrEmpty(AppValues.LangLuaFileType) && !AppValues.LangLuaFileType.Equals("cn", StringComparison.CurrentCultureIgnoreCase))
         {
-
-            string errorString = null;
-            TableExportToLangLuaHelper.ExportTableToLangLua(out errorString);
-            if (errorString != null)
-            {
-                Utils.LogErrorAndExit(errorString);
-            }
-            else
-            {
-                Utils.Log("导出LangTable.lua文件成功");
-            }
+            ExportLangLuaFile();
 
             return errorLevel;
         }
@@ -227,7 +217,7 @@ public class Program
         bool isExportPart = false;
 
         // 检查其他参数
-        for (int i = 4; i < args.Length; ++i)
+        for (int i = 5; i < args.Length; ++i)
         {
             string param = args[i];
 
@@ -1038,7 +1028,7 @@ public class Program
             if (string.IsNullOrEmpty(errorString))
             {
                 //TableInfo tableInfo = TableAnalyzeHelper.AnalyzeTable(ds.Tables[AppValues.EXCEL_DATA_SHEET_NAME], fileName, out errorString);
-                TableInfo tableInfo = TableAnalyzeHelper.AnalyzeTable(ds.Tables[AppValues.EXCEL_MY_SHEET_NAME], fileName, out errorString);
+                TableInfo tableInfo = TableAnalyzeHelper.AnalyzeTable(ds.Tables[AppValues.EXCEL_MY_DATA_SHEET_NAME], fileName, out errorString);
                 if (errorString != null)
                     Utils.LogErrorAndExit(string.Format("错误：解析{0}失败\n{1}", filePath, errorString));
                 else
@@ -1165,12 +1155,23 @@ public class Program
                         {
                             //Utils.Log("额外导出为lang.csv文件成功");
                         }
+
+                        TableExportToLuaHelper.ExportTableToLangLua(tableInfo, langFields, out errorString);
+                        if (errorString != null)
+                        {
+                            Utils.LogErrorAndExit(errorString);
+                        }
+                        else
+                        {
+
+                        }
                     }
                     else
                     {
-                        Utils.Log("额外导出为lang.csv文件失败");
+                        //Utils.Log("额外导出为lang.csv文件失败");
                     }
                 }
+
                 // 判断是否要额外导出为csv对应C#类文件
                 if (AppValues.ExportCsClassTableNames.Contains(tableName))
                 {
@@ -1220,8 +1221,11 @@ public class Program
                 Utils.Log("\n导出到数据库完毕\n");
             }
 
-            // 保存Lang.csv文件
-            TableExportToLangFileHelper.SaveLangFile();
+            // 保存LangTable.txt文件
+            ExportLangFile();
+            // 导出中文LangTable.lua
+            ExportLangLuaFile();
+
         }
         else
         {
@@ -1234,5 +1238,30 @@ public class Program
         Utils.Log("\n导出完毕", ConsoleColor.Green);
         Console.ReadKey();
         return errorLevel;
+    }
+
+    static bool ExportLangFile()
+    {
+        Utils.Log(string.Format("导出多语言文件\"cn/{0}\"：", TableExportToLangFileHelper.LangFileName), ConsoleColor.Green);
+        TableExportToLangFileHelper.SaveLangFile();
+
+        return true;
+    }
+    static bool ExportLangLuaFile()
+    {
+        Utils.Log(string.Format("导出多语言Lua文件\"{0}/{1}.lua\"：", AppValues.LangLuaFileType, TableExportToLangLuaHelper.LangLuaFileName), ConsoleColor.Green);
+
+        string errorString = null;
+        TableExportToLangLuaHelper.ExportTableToLangLua(out errorString);
+        if (errorString != null)
+        {
+            Utils.LogErrorAndExit(errorString);
+        }
+        else
+        {
+            Utils.Log("导出LangTable.lua文件成功");
+        }
+
+        return true;
     }
 }

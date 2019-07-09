@@ -9,11 +9,13 @@ public class TableAnalyzeHelper
 {
     public static TableInfo AnalyzeTable(DataTable dt, string tableName, out string errorString)
     {
+        Utils.Log(string.Format("row count={0}", dt.Rows.Count));
         if (dt.Rows.Count < AppValues.DATA_FIELD_DATA_START_INDEX)
         {
             errorString = "表格格式不符合要求，必须在表格前五行中依次声明字段描述、字段名、数据类型、检查规则、导出到MySQL数据库中的配置";
             return null;
         }
+        Utils.Log(string.Format("column count={0}", dt.Columns.Count));
         if (dt.Columns.Count < 2)
         {
             errorString = "表格中至少需要配置2个字段";
@@ -196,7 +198,7 @@ public class TableAnalyzeHelper
             string multiKey = dt.Rows[AppValues.DATA_FIELD_MULTI_KEY_INDEX][columnIndex].ToString().Trim();
             if (!string.IsNullOrEmpty(multiKey))
             {
-                Utils.Log(string.Format("Analyze: 关键字 multiKey={0}", multiKey));
+                Utils.Log(string.Format("表格{0}的关键字为 multiKey={1}", tableInfo.TableName, multiKey));
 
                 string[] tableKeys = multiKey.Split(',');
                 if (tableKeys != null && tableKeys.Length > 0)

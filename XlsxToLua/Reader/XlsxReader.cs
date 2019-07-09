@@ -19,8 +19,8 @@ public class XlsxReader
         }
         else if (fileState == FileState.IsOpen)
         {
-            errorString = string.Format("{0}文件正在被其他软件打开，请关闭后重新运行本工具", filePath);
-            return null;
+            //errorString = string.Format("{0}文件正在被其他软件打开，请关闭后重新运行本工具", filePath);
+            //return null;
         }
 
         OleDbConnection conn = null;
@@ -29,6 +29,8 @@ public class XlsxReader
 
         try
         {
+            Utils.Log(string.Format("读取Xlsx表格{0}", filePath));
+
             // 初始化连接并打开
             string connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + filePath + ";Extended Properties=\"Excel 12.0;HDR=NO;IMEX=1\"";
 
@@ -39,39 +41,71 @@ public class XlsxReader
             DataTable dtSheet = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, new object[] { null, null, null, "TABLE" });
 
             // 必须存在数据表
-            bool isFoundDateSheet = false;
+            bool isFoundDataSheet = false;
             // 可选配置表
             bool isFoundConfigSheet = false;
+
+            // 我们的数据表默认为第一张sheet；当有多张sheet时，sheet名字或为data，或为文件名
+            int dataSheetIndex = 0;
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string sheetFileName = fileName + "$";
+            AppValues.EXCEL_MY_DATA_SHEET_NAME = string.Empty;
 
             for (int i = 0; i < dtSheet.Rows.Count; ++i)
             {
                 string sheetName = dtSheet.Rows[i]["TABLE_NAME"].ToString();
-                if (i == 0)
-                {
-                    AppValues.EXCEL_MY_SHEET_NAME = sheetName;
-                }
+                Utils.Log(string.Format("表格sheet name={0}", sheetName));
 
-                //if (sheetName == AppValues.EXCEL_DATA_SHEET_NAME)
-                if (!string.IsNullOrEmpty(sheetName))
-                    isFoundDateSheet = true;
-                else if (sheetName == AppValues.EXCEL_CONFIG_SHEET_NAME)
+                if (sheetName.Equals(sheetFileName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // 表格中sheet的名字和文件名一样，当作数据表
+                    AppValues.EXCEL_MY_DATA_SHEET_NAME = sheetName;
+                    isFoundDataSheet = true;
+                    Utils.Log(string.Format("表格sheet名字和文件名一样{0}", sheetFileName));
+                }
+                else if (sheetName.Equals(AppValues.EXCEL_DATA_SHEET_NAME, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // 表格中sheet的名字为data时，默认当作数据表
+                    AppValues.EXCEL_MY_DATA_SHEET_NAME = sheetName;
+                    isFoundDataSheet = true;
+                }
+                else if (sheetName.Equals(AppValues.EXCEL_CONFIG_SHEET_NAME, StringComparison.CurrentCultureIgnoreCase))
+                {
                     isFoundConfigSheet = true;
+                }
+                else if (sheetName.Contains("_FilterDatabase"))
+                {
+                    ++dataSheetIndex;
+                }
+                else if (!isFoundDataSheet && i == dataSheetIndex)
+                {
+                    // 找不到合适的数据表时，选择使用合法的第一张。
+                    // 但有时候会选错！！！这时请修改表格的sheet名字
+                    AppValues.EXCEL_MY_DATA_SHEET_NAME = sheetName;
+                }
             }
-            if (!isFoundDateSheet)
+
+            if (!string.IsNullOrEmpty(AppValues.EXCEL_MY_DATA_SHEET_NAME))
             {
-                errorString = string.Format("错误：{0}中不含有Sheet名为{1}的数据表", filePath, AppValues.EXCEL_MY_SHEET_NAME.Replace("$", ""));
+                isFoundDataSheet = true;
+            }
+            if (!isFoundDataSheet)
+            {
+                errorString = string.Format("错误：{0}中不含有Sheet名为{1}的数据表", filePath, AppValues.EXCEL_MY_DATA_SHEET_NAME.Replace("$", ""));
                 return null;
             }
 
+            Utils.Log(string.Format("选择的数据表Sheet name={0}", AppValues.EXCEL_MY_DATA_SHEET_NAME));
+
             // 初始化适配器
             da = new OleDbDataAdapter();
-            da.SelectCommand = new OleDbCommand(String.Format("Select * FROM [{0}]", AppValues.EXCEL_MY_SHEET_NAME), conn);
+            da.SelectCommand = new OleDbCommand(String.Format("Select * FROM [{0}]", AppValues.EXCEL_MY_DATA_SHEET_NAME), conn);
 
             ds = new DataSet();
-            da.Fill(ds, AppValues.EXCEL_MY_SHEET_NAME);
+            da.Fill(ds, AppValues.EXCEL_MY_DATA_SHEET_NAME);
 
             // 删除表格末尾的空行
-            DataRowCollection rows = ds.Tables[AppValues.EXCEL_MY_SHEET_NAME].Rows;
+            DataRowCollection rows = ds.Tables[AppValues.EXCEL_MY_DATA_SHEET_NAME].Rows;
             int rowCount = rows.Count;
             for (int i = rowCount - 1; i >= AppValues.DATA_FIELD_DATA_START_INDEX; --i)
             {

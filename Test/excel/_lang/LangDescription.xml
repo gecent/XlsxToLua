@@ -5,8 +5,37 @@
         <Field Name="alias" />  
 	</LangElement>
 
+    <LangElement File="activity\activeness_daily.xlsx">
+        <Field Name="ActivityName" />    
+        <Field Name="Tag1Str" />  
+        <Field Name="Tag2Str" />  
+	</LangElement>
 
+    <LangElement File="activity\activity_jointsell_info.xlsx">
+        <Field Name="Gift_Name" />    
+	</LangElement>
 
-
-
+    <LangElement File="activity\activity_limitgift.xlsx">
+        <Field Name="Gift_Name" />    
+	</LangElement>
+	
+    <LangElement File="activity\activity_limitrank.xlsx">
+        <Field Name="IntroduceTitle" />    
+    </LangElement>
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 </LangContent>

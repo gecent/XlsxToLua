@@ -11,7 +11,7 @@ public class AppValues
     /// Excel文件中存放数据的工作簿Sheet名。除预设功能的特殊Sheet表之外，其余Sheet表可自定义内容，不会被本工具导出
     /// </summary>
     public const string EXCEL_DATA_SHEET_NAME = "data$";
-    public static string EXCEL_MY_SHEET_NAME = "";
+    public static string EXCEL_MY_DATA_SHEET_NAME = "";  // 除默认设置为data外，当表格中只有一个Sheet时可以使用自定义名字
 
     /// <summary>
     /// Excel文件中存放该表格配置的工作簿Sheet名
@@ -64,7 +64,7 @@ public class AppValues
     public const string LANG_NOT_MATCHING_PRINT_PARAM_STRING = "-printEmptyStringWhenLangNotMatching";
 
     /// <summary>
-    /// 导出LangLua文件，后续可以接参数：cn, en, tw, jp等
+    /// 导出LangLua文件，后续可以接参数：cn, other(en, tw, jp)等
     /// </summary>
     public const string LANG_LUA_PARAM_STRING = "-exportLangLua";
 

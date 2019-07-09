@@ -20,6 +20,45 @@ public class TableExportToLuaHelper
     // 数据类型声明所占的最少字符数
     private static int _FIELD_DATA_TYPE_MIN_LENGTH = 30;
 
+
+    /// <summary>
+    /// 特殊的Lua生成函数：保存为多语言版本
+    /// </summary>
+    /// <param name="tableInfo"></param>
+    /// <param name="errorString"></param>
+    /// <returns></returns>
+    public static bool ExportTableToLangLua(TableInfo tableInfo, List<LangField> langFields, out string errorString)
+    {
+        StringBuilder content = new StringBuilder();
+
+        string className = string.Format("record_{0}", tableInfo.TableName.ToLower());
+
+
+
+        // 生成数据内容开头
+        content.AppendFormat("----@classdef {0}", className);
+        content.AppendLine();
+        content.AppendFormat("local {0} = {}", className);
+        content.AppendLine();
+
+        // 当前缩进量
+        int currentLevel = 1;
+
+
+
+
+
+
+        errorString = "保存为lua文件失败\n";
+        return false;
+    }
+
+    /// <summary>
+    /// 默认的Lua生成函数
+    /// </summary>
+    /// <param name="tableInfo"></param>
+    /// <param name="errorString"></param>
+    /// <returns></returns>
     public static bool ExportTableToLua(TableInfo tableInfo, out string errorString)
     {
         StringBuilder content = new StringBuilder();
