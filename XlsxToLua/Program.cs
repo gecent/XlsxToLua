@@ -1125,11 +1125,12 @@ public class Program
                 // 对表格按默认方式导出（除非通过参数设置不执行此操作）
                 if (isNeedExportOriginalTable == true)
                 {
-                    TableExportToLuaHelper.ExportTableToLua(tableInfo, out errorString);
-                    if (errorString != null)
-                        Utils.LogErrorAndExit(errorString);
-                    else
-                        Utils.Log("按默认方式导出成功");
+                    // 目前不用默认导出，先注释 Matt 2019/7/8
+                    //TableExportToLuaHelper.ExportTableToLua(tableInfo, out errorString);
+                    //if (errorString != null)
+                    //    Utils.LogErrorAndExit(errorString);
+                    //else
+                    //    Utils.Log("按默认方式导出成功");
                 }
                 // 判断是否要额外导出为csv文件
                 if (AppValues.ExportCsvTableNames.Contains(tableName))

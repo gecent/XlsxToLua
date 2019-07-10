@@ -1,7 +1,8 @@
-programPath:../../../XlsxToLua/bin/Release/XlsxToLua.exe
+programPath:../../../XlsxToLua/bin/Debug/XlsxToLua.exe
 excelFolderPath:../../../Test/excel
 exportLuaFolderPath:../../../Test/lua
 clientFolderPath:-noClient
 langFilePath:-noLang
 -exportIncludeSubfolder:true
+-allowedNullNumber:true
 isCheckedUseRelativePath:true

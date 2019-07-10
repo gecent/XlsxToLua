@@ -21,6 +21,10 @@ public class TableExportToLuaHelper
     private static int _FIELD_DATA_TYPE_MIN_LENGTH = 30;
 
 
+    public const string DelimiterUnderline = "_";
+    public const string DelimiterComma = ",";
+
+
     /// <summary>
     /// 特殊的Lua生成函数：保存为多语言版本
     /// </summary>
@@ -31,15 +35,37 @@ public class TableExportToLuaHelper
     {
         StringBuilder content = new StringBuilder();
 
-        string className = string.Format("record_{0}", tableInfo.TableName.ToLower());
-        string dataName = string.Format("{0}", tableInfo.TableName.ToLower());
+        string recordName = string.Format("record_{0}", tableInfo.TableName.ToLower());
+        string className = string.Format("{0}", tableInfo.TableName.ToLower());
+        List<string> langFieldStrings = new List<string>();
+        if (langFields != null)
+        {
+            foreach(var itr in langFields)
+            {
+                langFieldStrings.Add(itr.FieldName);
+            }
+        }
+        string indexKeyName = "__index";
+        foreach (var itr in tableInfo.Keys)
+        {
+            indexKeyName += string.Format("_{0}", itr);
+        }
+        string keyParams = string.Empty;
+        for (int i = 0; i < tableInfo.Keys.Count; ++i)
+        {
+            if (0 != i)
+            {
+                keyParams += string.Format("{0} ", DelimiterComma);
+            }
+            keyParams += tableInfo.Keys[i];
+        }
 
 
 
         // 生成数据内容开头
-        content.AppendFormat("----@classdef {0}", className);
+        content.AppendFormat("----@classdef {0}", recordName);
         content.AppendLine();
-        content.AppendFormat("local {0} = ", className);
+        content.AppendFormat("local {0} = ", recordName);
         content.Append("{}");
         content.AppendLine();
         content.AppendLine();
@@ -51,27 +77,29 @@ public class TableExportToLuaHelper
         {
             FieldInfo fieldInfo = allField[column];
             string defalutValue = GetDefaultValueByType(fieldInfo.DataType);
-            content.AppendFormat("{0}.{1} = {2}--{3}", className, fieldInfo.FieldName, defalutValue, fieldInfo.Desc);
+            content.AppendFormat("{0}.{1} = {2}--{3}", recordName, fieldInfo.FieldName, defalutValue, fieldInfo.Desc);
             content.AppendLine();
         }
         content.AppendLine();
 
         // 生成数据内容：数据部分
-        content.AppendFormat("local {0} = ", dataName);
+        content.AppendFormat("local {0} = ", className);
         content.Append("{");
         content.AppendLine();
         content.AppendLine("   _data = {");
 
         int dataCount = tableInfo.GetKeyColumnFieldInfo().Data.Count;
+        Utils.Log(string.Format("Table: {0} row={1}", tableInfo.TableName, dataCount));
         for (int row = 0; row < dataCount; ++row)
         {
-            content.AppendFormat("    [{0}] = ", row);
+            content.AppendFormat("    [{0}] = ", row+1);
             content.Append("{");
 
             for (int column = 0; column < allField.Count; ++column)
             {
                 FieldInfo fieldInfo = allField[column];
-                content.AppendFormat("{0},", fieldInfo.Data[row].ToString());
+                string ret = GetFieldRealValue(tableInfo, fieldInfo, row, langFieldStrings);
+                content.AppendFormat("{0},", ret);
             }
 
             content.Append("},");
@@ -82,19 +110,192 @@ public class TableExportToLuaHelper
         content.AppendLine();
 
         // 生成数据内容：index_key
+        content.Append("local ");
+        content.Append(indexKeyName);
+        content.Append(" = {");
+        content.AppendLine();
+        for (int row = 0; row < dataCount; ++row)
+        {
+            content.Append("    [");
+            content.Append(GetLuaKeyString(tableInfo, row));
+            content.Append("] = ");
+            content.AppendFormat("{0},", row+1);
+            content.AppendLine();
+        }
+        content.AppendLine("}");
+        content.AppendLine();
 
+        // 生成数据内容：key_map
+        content.AppendLine("local __key_map = {");
+        for (int column = 0; column < allField.Count; ++column)
+        {
+            content.AppendFormat("    {0} = {1},", allField[column].FieldName, column+1);
+            content.AppendLine();
+        }
+        content.AppendLine("}");
+        content.AppendLine();
 
+        // 生成函数内容：metatable
+        string metatable = @"local m = {
+    __index = function(t, k)
+        if k == ""toObject"" then
+            return function()
+                local o = { }
+                for key, v in pairs(__key_map) do
+                    o[key] = t._raw[v]
+                end
+                return o
+            end
+        end
 
-        // 当前缩进量
-        int currentLevel = 1;
+        assert(__key_map[k], ""cannot find "" ..k.. "" ";
 
+        string metatable2 = @"in {0}";
 
+        string metatable3 = @" "")
+        return t._raw[__key_map[k]]
+    end
+}";
+        content.Append(metatable);
+        content.AppendFormat(metatable2, recordName);
+        content.Append(metatable3);
+        content.AppendLine();
+        content.AppendLine();
 
+        // 生成函数内容：getLength
+        string lengthFunction =
+@"function {0}.getLength()
+    return #{0}._data
+end";
 
+        content.AppendFormat(lengthFunction, className);
+        content.AppendLine();
+        content.AppendLine();
 
+        // 生成函数内容：hasKey
+        string hasKeyFunction =
+@"function {0}.hasKey(k)
+    if __key_map[k] == nil then
+        return false
+    else
+        return true
+    end
+end";
 
-        errorString = "保存为lua文件失败\n";
-        return false;
+        content.AppendFormat(hasKeyFunction, className);
+        content.AppendLine();
+        content.AppendLine();
+
+        string indexOfFunction =
+@"---
+--@return @class {0}
+function {1}.indexOf(index)
+    if index == nil then
+        return nil
+    end";
+
+        string indexOfFunction2 = @"
+    return setmetatable({_raw = ";
+        string indexOfFunction3 = @"{0}";
+
+        string indexOfFunction4 = @"._data[index]}, m)
+end";
+
+        content.AppendFormat(indexOfFunction, recordName, className);
+        content.Append(indexOfFunction2);
+        content.AppendFormat(indexOfFunction3, className);
+        content.Append(indexOfFunction4);
+        content.AppendLine();
+        content.AppendLine();
+
+        string getFunction =
+@"---
+--@return @class {0}
+function {1}.get({2})";
+
+        string getFunction2 =
+@"    return {0}.indexOf({1}[ {2} ])     
+end";
+
+        content.AppendFormat(getFunction, recordName, className, keyParams);
+        content.AppendLine();
+        if (tableInfo.Keys.Count == 1)
+        {
+            content.AppendFormat(getFunction2, className, indexKeyName, tableInfo.Keys[0]);
+        }
+        else
+        {
+            content.Append("    local k = ");
+            for (int i = 0; i < tableInfo.Keys.Count; ++i)
+            {
+                if (0 != i)
+                {
+                    content.AppendFormat(".. '{0}' .. ", DelimiterUnderline);
+                }
+                content.Append(tableInfo.Keys[i]);
+            }
+            content.AppendLine();
+            content.AppendFormat(getFunction2, className, indexKeyName, "k");
+        }
+        content.AppendLine();
+        content.AppendLine();
+
+        string setFunction =
+@"function {0}.set({1}, key, value)
+    local record = {0}.get({1})
+    if record then
+        local keyIndex = __key_map[key]
+        if keyIndex then
+            record._raw[keyIndex] = value
+        end
+    end
+end";
+
+        content.AppendFormat(setFunction, className, keyParams);
+        content.AppendLine();
+        content.AppendLine();
+
+        string getIndexFunction =
+@"function {0}.get_index_data()
+    return {1} 
+end";
+
+        content.AppendFormat(getIndexFunction, className, indexKeyName);
+        content.AppendLine();
+        content.AppendLine();
+
+        string findFunction =
+@"function {0}.find(cb)
+    for i=1, {0}.getLength(),1 do
+        local rec = {0}.indexOf(i)
+        if cb(rec)==true then
+            return rec
+        end
+    end
+    return nil
+end";
+
+        content.AppendFormat(findFunction, className);
+        content.AppendLine();
+        content.AppendLine();
+
+        // 生成数据内容结尾
+        content.AppendFormat("return {0}", className);
+        content.AppendLine();
+
+        string exportString = content.ToString();
+
+        // 保存为lua文件
+        if (Utils.SaveLuaFile(tableInfo.TableName, tableInfo.TableName, exportString) == true)
+        {
+            errorString = null;
+            return true;
+        }
+        else
+        {
+            errorString = "保存为lua文件失败\n";
+            return false;
+        }
     }
 
     private static string GetDefaultValueByType(DataType dataType)
@@ -117,6 +318,84 @@ public class TableExportToLuaHelper
 
         return ret;
     }
+
+    private static string GetFieldRealValue(TableInfo tableInfo, FieldInfo fieldInfo, int row, List<string> langFieldStrings = null)
+    {
+        StringBuilder ret = new StringBuilder();
+        object obj = fieldInfo.Data[row];
+        if (obj != null)
+        {
+            // 语言本地化
+            if (fieldInfo.DataType == DataType.String || fieldInfo.DataType == DataType.Lang )
+            {
+                string fieldName = fieldInfo.FieldName;
+                string stringValue = obj.ToString();
+                if (langFieldStrings != null && langFieldStrings.Contains(fieldInfo.FieldName))
+                {
+                    string text = obj as string;
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        // 如果是_开头的索引值，则不导出多语言版本
+                        string langKeyPrefix = TableExportToLangFileHelper.GetLangKeyPrefix(tableInfo, fieldName);
+                        if (!text.StartsWith(langKeyPrefix))
+                        {
+                            stringValue = langKeyPrefix + TableExportToLangFileHelper.GetLangKeyString(tableInfo, row);
+                        }
+                    }
+                }
+                ret.AppendFormat("\"{0}\"", stringValue);
+            }
+            else
+            {
+                ret.Append(obj.ToString());
+            }
+        }
+        else
+        {
+            ret.Append(GetDefaultValueByType(fieldInfo.DataType));
+        }
+
+        return ret.ToString();
+    }
+
+    public static string GetLuaKeyString(TableInfo tableInfo, int row)
+    {
+        StringBuilder ret = new StringBuilder();
+        if (tableInfo.Keys != null && tableInfo.Keys.Count > 1)
+        {
+            // 多个字段作为关键字
+            ret.Append("\"");
+            for (int i = 0; i < tableInfo.Keys.Count; ++i)
+            {
+                FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(tableInfo.Keys[i]);
+                if (0 != i)
+                {
+                    ret.Append(DelimiterUnderline);
+                }
+                ret.Append(fieldInfo.Data[row].ToString());
+            }
+            ret.Append("\"");
+        }
+        else
+        {
+            FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
+            if (keyColumnFieldInfo != null)
+            {
+                var data = keyColumnFieldInfo.Data[row];
+                if (keyColumnFieldInfo.DataType == DataType.String || keyColumnFieldInfo.DataType == DataType.Lang)
+                {
+                    ret.AppendFormat("\"{0}\"", data);
+                }
+                else
+                {
+                    ret.Append(data.ToString());
+                }
+            }
+        }
+
+        return ret.ToString();
+    }
+
 
     /// <summary>
     /// 默认的Lua生成函数

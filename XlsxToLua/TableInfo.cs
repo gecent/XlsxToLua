@@ -9,7 +9,7 @@ public class TableInfo
     public string TableName { get; set; }
     // 表格配置参数
     public Dictionary<string, List<string>> TableConfig { get; set; }
-    // 多重关键字，即关键字可以由多列组成，例如SkillID,SkillLevel由两个关键字组成
+    // 多重关键字，即关键字可以由多列组成，例如SkillID,SkillLevel由两个字段组成
     public List<string> Keys { get; set; }
     // 存储每个字段的信息以及按字段存储的所有数据
     private List<FieldInfo> _fieldInfo = new List<FieldInfo>();
