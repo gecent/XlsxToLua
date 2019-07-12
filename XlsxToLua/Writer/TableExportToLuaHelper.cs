@@ -135,6 +135,26 @@ public class TableExportToLuaHelper
         content.AppendLine("}");
         content.AppendLine();
 
+        // 生成数据内容：lang_map
+        if (langFieldStrings.Count > 0)
+        {
+            // 当且仅当有多语言字段时才导出
+            content.AppendLine("local __lang_map = {");
+            for (int column = 0, count = 0; column < allField.Count; ++column)
+            {
+                string fieldName = allField[column].FieldName;
+                if (langFieldStrings.Contains(fieldName))
+                {
+                    content.AppendFormat("    {0} = {1},", fieldName, count + 1);
+                    content.AppendLine();
+                    ++count;
+                }
+            }
+            content.AppendLine("}");
+            content.AppendLine();
+        }
+
+
         // 生成函数内容：metatable
         string metatable = @"local m = {
     __index = function(t, k)
@@ -156,9 +176,26 @@ public class TableExportToLuaHelper
         return t._raw[__key_map[k]]
     end
 }";
+
+        string metatable4 = @" "")
+        local ret = t._raw[__key_map[k]]
+        if __lang_map[k] then
+            return g_lang:GetLang(ret)
+        else
+            return ret
+        end
+    end
+}";
         content.Append(metatable);
         content.AppendFormat(metatable2, recordName);
-        content.Append(metatable3);
+        if (langFieldStrings.Count > 0)
+        {
+            content.Append(metatable4);
+        }
+        else
+        {
+            content.Append(metatable3);
+        }
         content.AppendLine();
         content.AppendLine();
 
@@ -332,7 +369,7 @@ end";
                 string stringValue = obj.ToString();
                 if (langFieldStrings != null && langFieldStrings.Contains(fieldInfo.FieldName))
                 {
-                    string text = obj as string;
+                    string text = obj.ToString();
                     if (!string.IsNullOrEmpty(text))
                     {
                         // 如果是_开头的索引值，则不导出多语言版本
@@ -343,8 +380,7 @@ end";
                         }
                     }
                 }
-                stringValue = stringValue.Replace("\n", "\\n").Replace("\"", "\\\"");
-                ret.AppendFormat("\"{0}\"", stringValue);
+                ret.AppendFormat("\"{0}\"", stringValue.Replace("\n", "\\n").Replace("\"", "\\\""));
             }
             else
             {

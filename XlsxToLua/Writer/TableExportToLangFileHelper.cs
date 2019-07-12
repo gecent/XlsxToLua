@@ -29,6 +29,11 @@ public class TableExportToLangFileHelper
                 errorString = string.Format("生成{0}，但找不到{1}中的{2}项", LangFileName, tableInfo.TableName, fieldName);
                 return false;
             }
+            if (fieldInfo.DataType != DataType.String && fieldInfo.DataType != DataType.Lang)
+            {
+                Utils.LogWarning(string.Format("表格{0}中{1}字段的类型不是字符串，请检查是否确定要导出？注意：只需导出字符串(string)类型的字段！！！", tableInfo.TableName, fieldName));
+                continue;
+            }
 
             string langKeyPrefix = GetLangKeyPrefix(tableInfo, fieldName);
 
