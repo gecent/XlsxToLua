@@ -112,7 +112,7 @@ public class TableExportToLangFileHelper
 
                     stringBuilder.Append(itr.Key);
                     stringBuilder.Append(LangFileDelimiterString);
-                    stringBuilder.Append(itr.Value);
+                    stringBuilder.Append(itr.Value.Replace(LangFileDelimiterString, "    "));
 
                     writer.WriteLine(stringBuilder);
                 }

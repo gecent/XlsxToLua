@@ -343,6 +343,7 @@ end";
                         }
                     }
                 }
+                stringValue.Replace("\n", "\\n").Replace("\"", "\\\"");
                 ret.AppendFormat("\"{0}\"", stringValue);
             }
             else
