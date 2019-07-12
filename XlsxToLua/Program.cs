@@ -1184,13 +1184,13 @@ public class Program
                 if (AppValues.DescReader.Contains(tableName))
                 {
                     // 多语言配置中的表格
-                    List<LangField> langFields = null;
-                    if (AppValues.DescReader.Description.TryGetValue(tableName, out langFields))
+                    LangContent langContent = null;
+                    if (AppValues.DescReader.Description.TryGetValue(tableName, out langContent))
                     {
 
                         Utils.Log(string.Format("\n导出包含多语言的表格\"{0}\"：", tableInfo.TableName), ConsoleColor.Green);
 
-                        TableExportToLuaHelper.ExportTableToLangLua(tableInfo, langFields, out errorString);
+                        TableExportToLuaHelper.ExportTableToLangLua(tableInfo, langContent, out errorString);
                         if (errorString != null)
                         {
                             Utils.LogErrorAndExit(errorString);
@@ -1201,7 +1201,7 @@ public class Program
                         }
 
                         // 解析出表格中的多语言内容
-                        TableExportToLangFileHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
+                        TableExportToLangFileHelper.ExportTableToLangContent(tableInfo, langContent, out errorString);
                         if (errorString != null)
                         {
                             Utils.LogErrorAndExit(errorString);

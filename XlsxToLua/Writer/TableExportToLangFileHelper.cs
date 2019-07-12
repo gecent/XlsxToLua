@@ -12,17 +12,45 @@ public class TableExportToLangFileHelper
     public const string LangFileName = "LangTable.txt";
 
 
-    public static bool ExportTableToLangContent(TableInfo tableInfo, List<LangField> langFields, out string errorString)
+    public static bool ExportTableToLangContent(TableInfo tableInfo, LangContent langContent, out string errorString)
     {
         errorString = null;
 
         // 主键列，用来生成LangKey
+        List<FieldInfo> allField = tableInfo.GetAllClientFieldInfo();
+        int columnCount = allField.Count;
         FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
         int rowCount = keyColumnFieldInfo.Data.Count;
 
-        for (int i = 0; i < langFields.Count; ++i)
+        List<string> langExportFields = new List<string>();
+        if (langContent != null)
         {
-            string fieldName = langFields[i].FieldName;
+            foreach (var itr in langContent.LangFields)
+            {
+                for (int column = 0; column < columnCount; ++column)
+                {
+                    FieldInfo fieldInfo = allField[column];
+                    string fieldName = fieldInfo.FieldName;
+                    // 多语言仅生成string/lang类型的字段
+                    if (fieldName.Equals(itr.FieldName, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        if (fieldInfo.DataType == DataType.String || fieldInfo.DataType == DataType.Lang)
+                        {
+                            langExportFields.Add(fieldName);
+                        }
+                        else
+                        {
+                            Utils.LogWarning(string.Format("表格{0}中{1}字段的类型不是字符串，请检查是否确定要导出？注意：只需导出字符串(string)类型的字段！！！", tableInfo.TableName, fieldName));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < langExportFields.Count; ++i)
+        {
+            string fieldName = langExportFields[i];
             FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(fieldName);
             if (fieldInfo == null)
             {

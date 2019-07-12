@@ -31,18 +31,38 @@ public class TableExportToLuaHelper
     /// <param name="tableInfo"></param>
     /// <param name="errorString"></param>
     /// <returns></returns>
-    public static bool ExportTableToLangLua(TableInfo tableInfo, List<LangField> langFields, out string errorString)
+    public static bool ExportTableToLangLua(TableInfo tableInfo, LangContent langContent, out string errorString)
     {
         StringBuilder content = new StringBuilder();
 
         string recordName = string.Format("record_{0}", tableInfo.TableName.ToLower());
         string className = string.Format("{0}", tableInfo.TableName.ToLower());
-        List<string> langFieldStrings = new List<string>();
-        if (langFields != null)
+        List<FieldInfo> allField = tableInfo.GetAllClientFieldInfo();
+        int columnCount = allField.Count;
+        FieldInfo keyColumnFieldInfo = tableInfo.GetKeyColumnFieldInfo();
+        int rowCount = keyColumnFieldInfo.Data.Count;
+
+        Utils.Log(string.Format("Table {0}: row={1}, column={2}", tableInfo.TableName, rowCount, columnCount));
+
+        List<string> langExportFields = new List<string>();
+        if (langContent != null)
         {
-            foreach(var itr in langFields)
+            foreach(var itr in langContent.LangFields)
             {
-                langFieldStrings.Add(itr.FieldName);
+                for (int column = 0; column < columnCount; ++column)
+                {
+                    FieldInfo fieldInfo = allField[column];
+                    string fieldName = fieldInfo.FieldName;
+                    // 多语言仅生成string/lang类型的字段
+                    if (fieldName.Equals(itr.FieldName, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        if (fieldInfo.DataType == DataType.String || fieldInfo.DataType == DataType.Lang)
+                        {
+                            langExportFields.Add(fieldName);
+                        }
+                        break;
+                    }
+                }
             }
         }
         string indexKeyName = "__index";
@@ -60,10 +80,9 @@ public class TableExportToLuaHelper
             keyParams += tableInfo.Keys[i];
         }
 
-
-
+        
         // 生成数据内容开头
-        content.AppendFormat("----@classdef {0}", recordName);
+        content.AppendFormat("---@classdef {0}", recordName);
         content.AppendLine();
         content.AppendFormat("local {0} = ", recordName);
         content.Append("{}");
@@ -72,7 +91,6 @@ public class TableExportToLuaHelper
         content.AppendLine();
 
         // 生成数据内容：变量部分
-        List<FieldInfo> allField = tableInfo.GetAllClientFieldInfo();
         for (int column = 0; column < allField.Count; ++column)
         {
             FieldInfo fieldInfo = allField[column];
@@ -88,9 +106,7 @@ public class TableExportToLuaHelper
         content.AppendLine();
         content.AppendLine("   _data = {");
 
-        int dataCount = tableInfo.GetKeyColumnFieldInfo().Data.Count;
-        Utils.Log(string.Format("Table: {0} row={1}", tableInfo.TableName, dataCount));
-        for (int row = 0; row < dataCount; ++row)
+        for (int row = 0; row < rowCount; ++row)
         {
             content.AppendFormat("    [{0}] = ", row+1);
             content.Append("{");
@@ -98,7 +114,7 @@ public class TableExportToLuaHelper
             for (int column = 0; column < allField.Count; ++column)
             {
                 FieldInfo fieldInfo = allField[column];
-                string ret = GetFieldRealValue(tableInfo, fieldInfo, row, langFieldStrings);
+                string ret = GetFieldRealValue(tableInfo, fieldInfo, row, langExportFields);
                 content.AppendFormat("{0},", ret);
             }
 
@@ -114,10 +130,10 @@ public class TableExportToLuaHelper
         content.Append(indexKeyName);
         content.Append(" = {");
         content.AppendLine();
-        for (int row = 0; row < dataCount; ++row)
+        for (int row = 0; row < rowCount; ++row)
         {
             content.Append("    [");
-            content.Append(GetLuaKeyString(tableInfo, row));
+            content.Append(GetLuaIndexKeyString(tableInfo, row));
             content.Append("] = ");
             content.AppendFormat("{0},", row+1);
             content.AppendLine();
@@ -136,19 +152,15 @@ public class TableExportToLuaHelper
         content.AppendLine();
 
         // 生成数据内容：lang_map
-        if (langFieldStrings.Count > 0)
+        if (langExportFields.Count > 0)
         {
             // 当且仅当有多语言字段时才导出
             content.AppendLine("local __lang_map = {");
-            for (int column = 0, count = 0; column < allField.Count; ++column)
+            for (int i = 0; i < langExportFields.Count; ++i)
             {
-                string fieldName = allField[column].FieldName;
-                if (langFieldStrings.Contains(fieldName))
-                {
-                    content.AppendFormat("    {0} = {1},", fieldName, count + 1);
-                    content.AppendLine();
-                    ++count;
-                }
+                string fieldName = langExportFields[i];
+                content.AppendFormat("    {0} = {1},", fieldName, i + 1);
+                content.AppendLine();
             }
             content.AppendLine("}");
             content.AppendLine();
@@ -188,7 +200,7 @@ public class TableExportToLuaHelper
 }";
         content.Append(metatable);
         content.AppendFormat(metatable2, recordName);
-        if (langFieldStrings.Count > 0)
+        if (langExportFields.Count > 0)
         {
             content.Append(metatable4);
         }
@@ -356,7 +368,7 @@ end";
         return ret;
     }
 
-    private static string GetFieldRealValue(TableInfo tableInfo, FieldInfo fieldInfo, int row, List<string> langFieldStrings = null)
+    private static string GetFieldRealValue(TableInfo tableInfo, FieldInfo fieldInfo, int row, List<string> langExportFields = null)
     {
         StringBuilder ret = new StringBuilder();
         object obj = fieldInfo.Data[row];
@@ -367,7 +379,7 @@ end";
             {
                 string fieldName = fieldInfo.FieldName;
                 string stringValue = obj.ToString();
-                if (langFieldStrings != null && langFieldStrings.Contains(fieldInfo.FieldName))
+                if (langExportFields != null && langExportFields.Contains(fieldInfo.FieldName))
                 {
                     string text = obj.ToString();
                     if (!string.IsNullOrEmpty(text))
@@ -395,7 +407,7 @@ end";
         return ret.ToString();
     }
 
-    public static string GetLuaKeyString(TableInfo tableInfo, int row)
+    public static string GetLuaIndexKeyString(TableInfo tableInfo, int row)
     {
         StringBuilder ret = new StringBuilder();
         if (tableInfo.Keys != null && tableInfo.Keys.Count > 1)

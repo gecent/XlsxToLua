@@ -3,21 +3,27 @@ using System.Collections.Generic;
 using System.Xml;
 using System.IO;
 
-public struct LangField
+public class LangField
 {
-    public string FieldName; // Read from Description
-    public string FieldOldName; // Read from Description
+    public string FieldName; // 多语言字段名
+    public string FieldAbbr; // 多语言字段缩写名，用于减短关键字
+}
+public class LangContent
+{
+    public string FileName; // 表格名
+    public string FileAbbr; // 表格缩写名，用于减短关键字
+    public List<LangField> LangFields = new List<LangField>(); //表格中包含的所有多语言字段
 }
 
 public class LangDescriptionReader
 {
     private List<string> m_FilePaths = new List<string>();
-    private Dictionary<String, List<LangField>> m_Description = new Dictionary<string, List<LangField>>();
+    private Dictionary<String, LangContent> m_Description = new Dictionary<string, LangContent>();
 
     /// <summary>
     /// key: 文件名（已经去掉路径和后缀）; value: 文件中的字段
     /// </summary>
-    public Dictionary<String, List<LangField>> Description { get { return m_Description; } private set { Description = value; } }
+    public Dictionary<String, LangContent> Description { get { return m_Description; } private set { Description = value; } }
 
     public bool Contains(string fileName)
     {
@@ -48,6 +54,7 @@ public class LangDescriptionReader
                     if (reader.Name == "LangElement" && reader.NodeType == XmlNodeType.Element)
                     {
                         String filePath = reader.GetAttribute("File");
+                        String fileAbbr = reader.GetAttribute("Abbr");
                         if (m_FilePaths.Contains(filePath))
                         {
                             m_FilePaths.Clear();
@@ -57,7 +64,6 @@ public class LangDescriptionReader
                         }
 
                         string fileName = Path.GetFileNameWithoutExtension(filePath);
-
                         if (m_Description.ContainsKey(fileName))
                         {
                             m_FilePaths.Clear();
@@ -66,23 +72,26 @@ public class LangDescriptionReader
                             return false;
                         }
 
+                        LangContent langContent = new LangContent();
+                        langContent.FileName = fileName;
+                        langContent.FileAbbr = fileAbbr;
+
                         XmlReader subReader = reader.ReadSubtree();
-                        List<LangField> listField = new List<LangField>();
                         while (subReader.Read())
                         {
                             if (subReader.Name == "Field" && subReader.NodeType == XmlNodeType.Element)
                             {
                                 LangField field = new LangField();
                                 field.FieldName = reader.GetAttribute("Name");
-                                field.FieldOldName = reader.GetAttribute("OldName");
+                                field.FieldAbbr = reader.GetAttribute("Abbr");
 
-                                listField.Add(field);
+                                langContent.LangFields.Add(field);
 
                                 Utils.Log(string.Format("LangField: path={0} file={1} field={2}", filePath, fileName, field.FieldName));
                             }
                         }
                         m_FilePaths.Add(filePath);
-                        m_Description.Add(fileName, listField);
+                        m_Description.Add(fileName, langContent);
                     }
                 }
             }
