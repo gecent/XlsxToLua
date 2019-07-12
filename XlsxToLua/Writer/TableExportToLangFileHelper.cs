@@ -26,7 +26,7 @@ public class TableExportToLangFileHelper
             FieldInfo fieldInfo = tableInfo.GetFieldInfoByFieldName(fieldName);
             if (fieldInfo == null)
             {
-                errorString = string.Format("生成LangFile，但找不到{0}中的{1}项", tableInfo.TableName, fieldName);
+                errorString = string.Format("生成{0}，但找不到{1}中的{2}项", LangFileName, tableInfo.TableName, fieldName);
                 return false;
             }
 
@@ -45,7 +45,7 @@ public class TableExportToLangFileHelper
                     if (LangContents.TryGetValue(langKey, out lastLangValue))
                     {
                         LangContents[langKey] = langValue;
-                        Utils.LogWarning(string.Format("LangFile: 重复： key={0} new value={1},    覆盖掉上一个内容value={2}", langKey, langValue, lastLangValue));
+                        Utils.LogWarning(string.Format("LangFile: 行{0}中{1}字段的文本和之前内容重复： (key={2} value={3}), 覆盖掉上一个内容last value={4}", row + 6, fieldName, langKey, langValue, lastLangValue));
                     }
                     else
                     {
@@ -55,18 +55,20 @@ public class TableExportToLangFileHelper
                 }
                 else
                 {
-                    Utils.Log(string.Format("LangFile: 忽略：不导出该键值 key={0} value={1}", langKey, langValue));
+                    Utils.Log(string.Format("LangFile: 行{0}中{1}字段的文本内容为空，忽略之，不导出该键值(key={2} value={3})", row + 6, fieldName, langKey, langValue));
                 }
             }
         }
 
         return false;
     }
+
     public static string GetLangKeyPrefix(TableInfo tableInfo, string fieldName)
     {
         string langKeyPrefix = string.Format("{0}{1}{2}{3}", LangKeyDelimiterString, tableInfo.TableName.ToUpper(), LangKeyDelimiterString, fieldName.ToUpper());
         return langKeyPrefix;
     }
+
     public static string GetLangKeyString(TableInfo tableInfo, int row)
     {
         string valueString = string.Empty;

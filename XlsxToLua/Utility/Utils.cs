@@ -493,7 +493,7 @@ public class Utils
             if (Directory.Exists(exportDirectoryPath) == false)
                 Directory.CreateDirectory(exportDirectoryPath);
 
-            string savePath = Utils.CombinePath(exportDirectoryPath, fileName + ".lua");
+            string savePath = Utils.CombinePath(exportDirectoryPath, "/table/" + fileName + ".lua");
             StreamWriter writer = new StreamWriter(savePath, false, new UTF8Encoding(false));
             writer.Write(content);
             writer.Flush();
@@ -517,7 +517,7 @@ public class Utils
             if (Directory.Exists(filePath) == false)
                 Directory.CreateDirectory(filePath);
 
-            string savePath = Utils.CombinePath(filePath, fileName + ".lua");
+            string savePath = Utils.CombinePath(filePath, "/table/" + fileName + ".lua");
             StreamWriter writer = new StreamWriter(savePath, false, new UTF8Encoding(false));
             writer.Write(content);
             writer.Flush();

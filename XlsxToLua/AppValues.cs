@@ -39,6 +39,11 @@ public class AppValues
     public const string EXPORT_MYSQL_PARAM_STRING = "-exportMySQL";
 
     /// <summary>
+    /// 声明仅仅导出多语言相关的表格的命令参数
+    /// </summary>
+    public const string EXPORT_LANG_ONLY_PARAM_STRING = "-exportLangOnly";
+
+    /// <summary>
     /// 声明在生成的lua文件开头以注释形式展示列信息的命令参数
     /// </summary>
     public const string NEED_COLUMN_INFO_PARAM_STRING = "-columnInfo";
@@ -374,6 +379,11 @@ public class AppValues
     public static string LangDescFilePath = null;
 
     /// <summary>
+    /// 新：国际化配置文件读取
+    /// </summary>
+    public static LangDescriptionReader DescReader = null;
+
+    /// <summary>
     /// 用户输入的国际化文件所在路径
     /// </summary>
     public static string LangFilePath = null;
@@ -402,6 +412,11 @@ public class AppValues
     /// 用户输入的是否导出表格数据到MySQL数据库
     /// </summary>
     public static bool IsExportMySQL = false;
+
+    /// <summary>
+    /// 声明仅仅导出多语言相关的表格的命令参数
+    /// </summary>
+    public static bool IsExportLangOnly = false;
 
     /// <summary>
     /// 用户输入的是否需要在生成lua文件的最上方用注释形式显示列信息（默认为不需要）

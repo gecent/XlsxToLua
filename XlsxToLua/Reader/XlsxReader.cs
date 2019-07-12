@@ -110,9 +110,14 @@ public class XlsxReader
             for (int i = rowCount - 1; i >= AppValues.DATA_FIELD_DATA_START_INDEX; --i)
             {
                 if (string.IsNullOrEmpty(rows[i][0].ToString()))
+                {
                     rows.RemoveAt(i);
+                }
                 else
-                    break;
+                {
+                    //注释，中间的空行也会删除
+                    //break;
+                }
             }
 
             if (isFoundConfigSheet == true)

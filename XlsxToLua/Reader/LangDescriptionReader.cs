@@ -15,7 +15,7 @@ public class LangDescriptionReader
     private Dictionary<String, List<LangField>> m_Description = new Dictionary<string, List<LangField>>();
 
     /// <summary>
-    /// key: 文件名（去掉/之前的），value: 文件中的字段
+    /// key: 文件名（已经去掉路径和后缀）; value: 文件中的字段
     /// </summary>
     public Dictionary<String, List<LangField>> Description { get { return m_Description; } private set { Description = value; } }
 

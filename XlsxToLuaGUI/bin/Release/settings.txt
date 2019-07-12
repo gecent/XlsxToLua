@@ -1,4 +1,4 @@
-programPath:../../../XlsxToLua/bin/Debug/XlsxToLua.exe
+programPath:XlsxToLua.exe
 excelFolderPath:../../../Test/excel
 exportLuaFolderPath:../../../Test/lua
 clientFolderPath:-noClient

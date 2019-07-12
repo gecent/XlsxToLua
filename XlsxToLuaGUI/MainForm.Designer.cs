@@ -64,6 +64,7 @@
             this.cbExportKeepDirectoryStructure = new System.Windows.Forms.CheckBox();
             this.btnGenerateLangEn = new System.Windows.Forms.Button();
             this.btnGenerateLangTw = new System.Windows.Forms.Button();
+            this.cbExportLangOnly = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // lbExcelFolderPath
@@ -227,7 +228,7 @@
             // cbPart
             // 
             this.cbPart.AutoSize = true;
-            this.cbPart.Location = new System.Drawing.Point(15, 403);
+            this.cbPart.Location = new System.Drawing.Point(15, 426);
             this.cbPart.Name = "cbPart";
             this.cbPart.Size = new System.Drawing.Size(570, 16);
             this.cbPart.TabIndex = 17;
@@ -237,14 +238,14 @@
             // tbPartExcelNames
             // 
             this.tbPartExcelNames.AllowDrop = true;
-            this.tbPartExcelNames.Location = new System.Drawing.Point(69, 426);
+            this.tbPartExcelNames.Location = new System.Drawing.Point(69, 449);
             this.tbPartExcelNames.Name = "tbPartExcelNames";
             this.tbPartExcelNames.Size = new System.Drawing.Size(435, 21);
             this.tbPartExcelNames.TabIndex = 18;
             // 
             // btnChoosePartExcel
             // 
-            this.btnChoosePartExcel.Location = new System.Drawing.Point(519, 423);
+            this.btnChoosePartExcel.Location = new System.Drawing.Point(519, 446);
             this.btnChoosePartExcel.Name = "btnChoosePartExcel";
             this.btnChoosePartExcel.Size = new System.Drawing.Size(75, 23);
             this.btnChoosePartExcel.TabIndex = 19;
@@ -325,7 +326,7 @@
             this.cbAllowedNullNumber.AutoSize = true;
             this.cbAllowedNullNumber.Checked = true;
             this.cbAllowedNullNumber.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbAllowedNullNumber.Location = new System.Drawing.Point(15, 382);
+            this.cbAllowedNullNumber.Location = new System.Drawing.Point(15, 405);
             this.cbAllowedNullNumber.Name = "cbAllowedNullNumber";
             this.cbAllowedNullNumber.Size = new System.Drawing.Size(408, 16);
             this.cbAllowedNullNumber.TabIndex = 27;
@@ -348,7 +349,7 @@
             // cbExcept
             // 
             this.cbExcept.AutoSize = true;
-            this.cbExcept.Location = new System.Drawing.Point(15, 455);
+            this.cbExcept.Location = new System.Drawing.Point(15, 478);
             this.cbExcept.Name = "cbExcept";
             this.cbExcept.Size = new System.Drawing.Size(576, 16);
             this.cbExcept.TabIndex = 52;
@@ -358,14 +359,14 @@
             // tbExceptExcelNames
             // 
             this.tbExceptExcelNames.AllowDrop = true;
-            this.tbExceptExcelNames.Location = new System.Drawing.Point(69, 478);
+            this.tbExceptExcelNames.Location = new System.Drawing.Point(69, 501);
             this.tbExceptExcelNames.Name = "tbExceptExcelNames";
             this.tbExceptExcelNames.Size = new System.Drawing.Size(435, 21);
             this.tbExceptExcelNames.TabIndex = 53;
             // 
             // btnChooseExceptExcel
             // 
-            this.btnChooseExceptExcel.Location = new System.Drawing.Point(519, 475);
+            this.btnChooseExceptExcel.Location = new System.Drawing.Point(519, 498);
             this.btnChooseExceptExcel.Name = "btnChooseExceptExcel";
             this.btnChooseExceptExcel.Size = new System.Drawing.Size(75, 23);
             this.btnChooseExceptExcel.TabIndex = 54;
@@ -417,11 +418,22 @@
             this.btnGenerateLangTw.UseVisualStyleBackColor = true;
             this.btnGenerateLangTw.Click += new System.EventHandler(this.btnGenerateLangTw_Click);
             // 
+            // cbExportLangOnly
+            // 
+            this.cbExportLangOnly.AutoSize = true;
+            this.cbExportLangOnly.Location = new System.Drawing.Point(15, 381);
+            this.cbExportLangOnly.Name = "cbExportLangOnly";
+            this.cbExportLangOnly.Size = new System.Drawing.Size(306, 16);
+            this.cbExportLangOnly.TabIndex = 91;
+            this.cbExportLangOnly.Text = "-exportLangOnly（仅导出多语言配置里相关的表格）";
+            this.cbExportLangOnly.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(968, 534);
+            this.Controls.Add(this.cbExportLangOnly);
             this.Controls.Add(this.btnGenerateLangTw);
             this.Controls.Add(this.btnGenerateLangEn);
             this.Controls.Add(this.cbExportKeepDirectoryStructure);
@@ -507,6 +519,7 @@
         private System.Windows.Forms.CheckBox cbExportKeepDirectoryStructure;
         private System.Windows.Forms.Button btnGenerateLangEn;
         private System.Windows.Forms.Button btnGenerateLangTw;
+        private System.Windows.Forms.CheckBox cbExportLangOnly;
     }
 }
 

@@ -10,6 +10,23 @@ using System.Text;
 
 public class Program
 {
+    static int Main(string[] args)
+    {
+        int errorLevel = 0;
+
+        errorLevel = CheckArgs(args);
+        if (errorLevel == 0)
+        {
+            errorLevel = ReadFiles();
+            if (errorLevel == 0)
+            {
+                errorLevel = ExportFiles();
+            }
+        }
+
+        return errorLevel;
+    }
+    
     /// <summary>
     /// 传入参数中，第1个必须为Excel表格所在目录，第2个必须为存放导出lua文件的目录，第3个参数为项目Client目录的路径（无需文件存在型检查规则则填-noClient），第4个参数为必须为lang文件路径（没有填-noLang）
     /// 可附加参数有：
@@ -38,7 +55,7 @@ public class Program
     /// new args:
     /// 15) -exportLangLua (后面英语小写参数分别可以为cn, en, tw, jp等)
     /// </summary>
-    static int Main(string[] args)
+    static int CheckArgs(string[] args)
     {
         int errorLevel = 0;
 
@@ -47,6 +64,9 @@ public class Program
         {
             Utils.LogErrorAndExit("错误：未输入Excel表格所在目录");
         }
+
+        int argNumber = 0;
+        Utils.Log(string.Format("参数：{0}={1}", argNumber, args[argNumber]));
         if (!Directory.Exists(args[0]))
         {
             Utils.LogErrorAndExit(string.Format("错误：输入的Excel表格所在目录不存在，路径为{0}", args[0]));
@@ -60,6 +80,9 @@ public class Program
         {
             Utils.LogErrorAndExit("错误：未输入要将生成lua文件存放的路径");
         }
+
+        ++argNumber;
+        Utils.Log(string.Format("参数：{0}={1}", argNumber, args[argNumber]));
         if (!Directory.Exists(args[1]))
         {
             Utils.LogErrorAndExit(string.Format("错误：输入的lua文件导出路径不存在，路径为{0}", args[1]));
@@ -73,6 +96,9 @@ public class Program
         {
             Utils.LogErrorAndExit("错误：未输入项目Client目录的路径，如果不需要请输入参数-noClient");
         }
+
+        ++argNumber;
+        Utils.Log(string.Format("参数：{0}={1}", argNumber, args[argNumber]));
         if (AppValues.NO_CLIENT_PATH_STRING.Equals(args[2], StringComparison.CurrentCultureIgnoreCase))
         {
             Utils.LogWarning("警告：你选择了不指定Client文件夹路径，则本工具无法检查表格中填写的图片路径等对应的文件是否存在");
@@ -93,6 +119,9 @@ public class Program
         {
             Utils.LogErrorAndExit("错误：未输入lang文件路径或未声明不含lang文件（使用-noLang）");
         }
+
+        ++argNumber;
+        Utils.Log(string.Format("参数：{0}={1}", argNumber, args[argNumber]));
         if (AppValues.NO_LANG_PARAM_STRING.Equals(args[3], StringComparison.CurrentCultureIgnoreCase))
         {
             AppValues.LangFilePath = null;
@@ -119,10 +148,15 @@ public class Program
         {
             Utils.LogWarning("错误：未输入导出LangTable.lua文件所需的多语言种类");
         }
+
+        ++argNumber;
+        Utils.Log(string.Format("参数：{0}={1}", argNumber, args[argNumber]));
+
         string langLuaParam = args[4];
         if (langLuaParam.StartsWith(AppValues.LANG_LUA_PARAM_STRING, StringComparison.CurrentCultureIgnoreCase))
         {
-            AppValues.LangLuaFileType = langLuaParam.Substring(AppValues.LANG_LUA_PARAM_STRING.Length).Trim().ToLower();
+            string langLuaType = langLuaParam.Substring(AppValues.LANG_LUA_PARAM_STRING.Length).Trim().ToLower();
+            AppValues.LangLuaFileType = langLuaType.Substring(1, langLuaType.Length - 2);
             Utils.Log(string.Format("导出LangTable.lua多语言种类={0}", AppValues.LangLuaFileType));
         }
         else
@@ -144,6 +178,8 @@ public class Program
         // 先判断是否指定要导出Excel文件夹下属子文件夹中的Excel文件，若要导出还需要确保不同文件夹下的Excel文件也不允许同名
         for (int i = 4; i < args.Length; ++i)
         {
+            Utils.Log(string.Format("参数：{0}={1}", i, args[i]));
+
             string tempParam = args[i];
             if (tempParam.Equals(AppValues.EXPORT_INCLUDE_SUBFOLDER_PARAM_STRING, StringComparison.CurrentCultureIgnoreCase))
             {
@@ -253,6 +289,11 @@ public class Program
                 AppValues.IsExportMySQL = true;
                 Utils.LogWarning("你选择了导出表格数据到MySQL数据库");
             }
+            else if (param.Equals(AppValues.EXPORT_LANG_ONLY_PARAM_STRING, StringComparison.CurrentCultureIgnoreCase))
+            {
+                AppValues.IsExportLangOnly = true;
+                Utils.LogWarning("你选择了仅仅导出多语言相关的表格");
+            }            
             else if (param.StartsWith(AppValues.EXCEPT_EXPORT_PARAM_STRING, StringComparison.CurrentCultureIgnoreCase))
             {
                 // 解析声明的本次忽略导出的Excel名
@@ -1006,12 +1047,59 @@ public class Program
             Utils.LogErrorAndExit(errorConfigString);
         }
 
+        return errorLevel;
+    }
+
+
+    /// <summary>
+    /// 读取XLSX等和相关配置文件
+    /// </summary>
+    /// <returns></returns>
+    static int ReadFiles()
+    {
+        int errorLevel = 0;
+
+        // 读取多语言配置文件
+        TableExportToLangFileHelper.LangContents.Clear();
+        AppValues.DescReader = new LangDescriptionReader();
+        AppValues.LangDescFilePath = AppValues.ExcelFolderPath + "/_lang/LangDescription.xml";
+        Utils.Log(string.Format("默认的Description所在路径：{0}", AppValues.LangDescFilePath));
+        string outputString = null;
+        if (AppValues.DescReader.ReadFile(AppValues.LangDescFilePath, out outputString))
+        {
+            Utils.Log(string.Format("读取配置文件：{0}", AppValues.LangDescFilePath), ConsoleColor.Green);
+
+            // 只导出多语言相关的表格
+            if (AppValues.IsExportLangOnly)
+            {
+                List<string> toRemoves = new List<string>();
+                foreach(var itr in AppValues.ExportTableNameAndPath)
+                {
+                    if (!AppValues.DescReader.Contains(itr.Key))
+                    {
+                        toRemoves.Add(itr.Key);
+                    }
+                }
+                foreach(var itr in toRemoves)
+                {
+                    AppValues.ExportTableNameAndPath.Remove(itr);
+                }
+            }
+        }
+        else
+        {
+            Utils.LogErrorAndExit(outputString);
+        }
+
         // 读取给定的Excel所在目录下的所有Excel文件，然后解析成本工具所需的数据结构
         Utils.Log(string.Format("开始解析Excel所在目录下的所有Excel文件（{0}）：", AppValues.IsExportIncludeSubfolder == true ? "包含子目录中的Excel文件" : "不包含子目录中的Excel文件"));
         Stopwatch stopwatch = new Stopwatch();
-        // 注意：不管Excel表格本次是否需要进行导出，都要进行解析，因为其他表格中可能含有对那些表格的引用检查
-        string[] excelFilePath = Directory.GetFiles(AppValues.ExcelFolderPath, "*.xlsx", AppValues.IsExportIncludeSubfolder == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-        foreach (string filePath in excelFilePath)
+
+        //// 注意：不管Excel表格本次是否需要进行导出，都要进行解析，因为其他表格中可能含有对那些表格的引用检查
+        //string[] excelFilePath = Directory.GetFiles(AppValues.ExcelFolderPath, "*.xlsx", AppValues.IsExportIncludeSubfolder == true ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+        // 改变策略：只解析需要导出的文件 By Matt 2019/7/12
+        foreach (string filePath in AppValues.ExportTableNameAndPath.Values)
         {
             string fileName = Path.GetFileNameWithoutExtension(filePath);
             if (fileName.StartsWith(AppValues.EXCEL_TEMP_FILE_FILE_NAME_START_STRING))
@@ -1045,9 +1133,19 @@ public class Program
                 }
             }
             else
+            {
                 Utils.LogErrorAndExit(string.Format("错误：读取{0}失败\n{1}", filePath, errorString));
+            }
         }
 
+
+        return errorLevel;
+    }
+
+    static int ExportFiles()
+    {
+        int errorLevel = 0;
+        
         // 进行表格检查
         bool isTableAllRight = true;
         if (AppValues.IsNeedCheck == true)
@@ -1072,21 +1170,7 @@ public class Program
         if (isTableAllRight == true)
         {
             Utils.Log("\n表格检查完毕，没有发现错误，开始导出为lua文件\n");
-
-            TableExportToLangFileHelper.LangContents.Clear();
-            LangDescriptionReader descReader = new LangDescriptionReader();
-            string descFilePath = AppValues.ExcelFolderPath + "/_lang/LangDescription.xml";
-            Utils.Log(string.Format("默认的Description所在路径：{0}", descFilePath));
-            string outputString = null;
-            if (descReader.ReadFile(descFilePath, out outputString))
-            {
-                Utils.Log("读取Description文件正确");
-            }
-            else
-            {
-                Utils.LogError(outputString);
-            }
-
+            
             // 进行表格导出
             foreach (var item in AppValues.ExportTableNameAndPath)
             {
@@ -1094,68 +1178,17 @@ public class Program
                 string filePath = item.Value;
                 TableInfo tableInfo = AppValues.TableInfo[tableName];
                 string errorString = null;
-                Utils.Log(string.Format("导出表格\"{0}\"：", tableInfo.TableName), ConsoleColor.Green);
-                bool isNeedExportOriginalTable = true;
-                // 判断是否设置了特殊导出规则
-                if (tableInfo.TableConfig != null && tableInfo.TableConfig.ContainsKey(AppValues.CONFIG_NAME_EXPORT))
+
+                //ExportLuaFile_Old(tableInfo, tableName);
+                
+                if (AppValues.DescReader.Contains(tableName))
                 {
-                    List<string> inputParams = tableInfo.TableConfig[AppValues.CONFIG_NAME_EXPORT];
-                    if (inputParams.Contains(AppValues.CONFIG_PARAM_NOT_EXPORT_ORIGINAL_TABLE))
-                    {
-                        isNeedExportOriginalTable = false;
-                        if (inputParams.Count == 1)
-                            Utils.LogWarning(string.Format("警告：你设置了不对表格\"{0}\"按默认方式进行导出，而又没有指定任何其他自定义导出规则，本工具对此表格不进行任何导出，请确认是否真要如此", tableInfo.TableName));
-                        else
-                            Utils.Log("你设置了不对此表进行默认规则导出");
-                    }
-                    // 执行设置的特殊导出规则
-                    foreach (string param in inputParams)
-                    {
-                        if (!AppValues.CONFIG_PARAM_NOT_EXPORT_ORIGINAL_TABLE.Equals(param, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            Utils.Log(string.Format("对此表格按\"{0}\"自定义规则进行导出：", param));
-                            TableExportToLuaHelper.SpecialExportTableToLua(tableInfo, param, out errorString);
-                            if (errorString != null)
-                                Utils.LogErrorAndExit(string.Format("导出失败：\n{0}\n", errorString));
-                            else
-                                Utils.Log("成功");
-                        }
-                    }
-                }
-                // 对表格按默认方式导出（除非通过参数设置不执行此操作）
-                if (isNeedExportOriginalTable == true)
-                {
-                    // 目前不用默认导出，先注释 Matt 2019/7/8
-                    //TableExportToLuaHelper.ExportTableToLua(tableInfo, out errorString);
-                    //if (errorString != null)
-                    //    Utils.LogErrorAndExit(errorString);
-                    //else
-                    //    Utils.Log("按默认方式导出成功");
-                }
-                // 判断是否要额外导出为csv文件
-                if (AppValues.ExportCsvTableNames.Contains(tableName))
-                {
-                    TableExportToCsvHelper.ExportTableToCsv(tableInfo, out errorString);
-                    if (errorString != null)
-                        Utils.LogErrorAndExit(errorString);
-                    else
-                        Utils.Log("额外导出为csv文件成功");
-                }
-                // 判断是否要额外导出为多语言lang目录中的csv文件
-                if (descReader.Contains(tableName))
-                {
+                    // 多语言配置中的表格
                     List<LangField> langFields = null;
-                    if (descReader.Description.TryGetValue(tableName, out langFields))
+                    if (AppValues.DescReader.Description.TryGetValue(tableName, out langFields))
                     {
-                        TableExportToLangFileHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
-                        if (errorString != null)
-                        {
-                            Utils.LogErrorAndExit(errorString);
-                        }
-                        else
-                        {
-                            //Utils.Log("额外导出为lang.csv文件成功");
-                        }
+
+                        Utils.Log(string.Format("\n导出包含多语言的表格\"{0}\"：", tableInfo.TableName), ConsoleColor.Green);
 
                         TableExportToLuaHelper.ExportTableToLangLua(tableInfo, langFields, out errorString);
                         if (errorString != null)
@@ -1166,10 +1199,35 @@ public class Program
                         {
 
                         }
+
+                        // 解析出表格中的多语言内容
+                        TableExportToLangFileHelper.ExportTableToLangContent(tableInfo, langFields, out errorString);
+                        if (errorString != null)
+                        {
+                            Utils.LogErrorAndExit(errorString);
+                        }
+                        else
+                        {
+
+                        }
                     }
                     else
                     {
-                        //Utils.Log("额外导出为lang.csv文件失败");
+                        Utils.Log(string.Format("多语言配置中的表格{0}没有正确的Field信息", tableName));
+                    }
+                }
+                else
+                {
+                    Utils.Log(string.Format("\n导出一般表格\"{0}\"：", tableInfo.TableName), ConsoleColor.Green);
+
+                    TableExportToLuaHelper.ExportTableToLangLua(tableInfo, null, out errorString);
+                    if (errorString != null)
+                    {
+                        Utils.LogErrorAndExit(errorString);
+                    }
+                    else
+                    {
+
                     }
                 }
 
@@ -1223,7 +1281,7 @@ public class Program
             }
 
             // 保存LangTable.txt文件
-            ExportLangFile();
+            ExportLangTableFile();
             // 导出中文LangTable.lua
             ExportLangLuaFile();
 
@@ -1238,22 +1296,77 @@ public class Program
 
         Utils.Log("\n导出完毕", ConsoleColor.Green);
         Console.ReadKey();
+
         return errorLevel;
     }
 
-    static bool ExportLangFile()
+    static bool ExportLuaFile_Old(TableInfo tableInfo, string tableName)
     {
-        Utils.Log(string.Format("导出多语言文件\"cn/{0}\"：", TableExportToLangFileHelper.LangFileName), ConsoleColor.Green);
+        string errorString = null;
+
+        Utils.Log(string.Format("导出表格\"{0}\"：", tableInfo.TableName), ConsoleColor.Green);
+        bool isNeedExportOriginalTable = true;
+        // 判断是否设置了特殊导出规则
+        if (tableInfo.TableConfig != null && tableInfo.TableConfig.ContainsKey(AppValues.CONFIG_NAME_EXPORT))
+        {
+            List<string> inputParams = tableInfo.TableConfig[AppValues.CONFIG_NAME_EXPORT];
+            if (inputParams.Contains(AppValues.CONFIG_PARAM_NOT_EXPORT_ORIGINAL_TABLE))
+            {
+                isNeedExportOriginalTable = false;
+                if (inputParams.Count == 1)
+                    Utils.LogWarning(string.Format("警告：你设置了不对表格\"{0}\"按默认方式进行导出，而又没有指定任何其他自定义导出规则，本工具对此表格不进行任何导出，请确认是否真要如此", tableInfo.TableName));
+                else
+                    Utils.Log("你设置了不对此表进行默认规则导出");
+            }
+            // 执行设置的特殊导出规则
+            foreach (string param in inputParams)
+            {
+                if (!AppValues.CONFIG_PARAM_NOT_EXPORT_ORIGINAL_TABLE.Equals(param, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    Utils.Log(string.Format("对此表格按\"{0}\"自定义规则进行导出：", param));
+                    TableExportToLuaHelper.SpecialExportTableToLua(tableInfo, param, out errorString);
+                    if (errorString != null)
+                        Utils.LogErrorAndExit(string.Format("导出失败：\n{0}\n", errorString));
+                    else
+                        Utils.Log("成功");
+                }
+            }
+        }
+        // 对表格按默认方式导出（除非通过参数设置不执行此操作）
+        if (isNeedExportOriginalTable == true)
+        {
+            TableExportToLuaHelper.ExportTableToLua(tableInfo, out errorString);
+            if (errorString != null)
+                Utils.LogErrorAndExit(errorString);
+            else
+                Utils.Log("按默认方式导出成功");
+        }
+        // 判断是否要额外导出为csv文件
+        if (AppValues.ExportCsvTableNames.Contains(tableName))
+        {
+            TableExportToCsvHelper.ExportTableToCsv(tableInfo, out errorString);
+            if (errorString != null)
+                Utils.LogErrorAndExit(errorString);
+            else
+                Utils.Log("额外导出为csv文件成功");
+        }
+
+        return true;
+    }
+
+    static bool ExportLangTableFile()
+    {
+        Utils.Log(string.Format("\n导出多语言文件\"_lang/cn/{0}\"：", TableExportToLangFileHelper.LangFileName), ConsoleColor.Green);
         TableExportToLangFileHelper.SaveLangFile();
 
         return true;
     }
     static bool ExportLangLuaFile()
     {
-        Utils.Log(string.Format("导出多语言Lua文件\"{0}/{1}.lua\"：", AppValues.LangLuaFileType, TableExportToLangLuaHelper.LangLuaFileName), ConsoleColor.Green);
+        Utils.Log(string.Format("\n导出多语言Lua\"lang/{0}/table/{1}.lua\"：", AppValues.LangLuaFileType, TableExportToLangLuaHelper.LangLuaFileName), ConsoleColor.Green);
 
         string errorString = null;
-        TableExportToLangLuaHelper.ExportTableToLangLua(out errorString);
+        TableExportToLangLuaHelper.ExportLangTableToLangLua(out errorString);
         if (errorString != null)
         {
             Utils.LogErrorAndExit(errorString);

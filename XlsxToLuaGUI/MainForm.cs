@@ -261,14 +261,33 @@ namespace XlsxToLuaGUI
         //    }
         //}
 
+        private string TrimArgs(string programPath, string args)
+        {
+            string newArgs = args;
+            string exePath = string.Format("\"{0}\"", programPath);
+            if (newArgs.StartsWith(exePath))
+            {
+                newArgs = newArgs.Substring(newArgs.IndexOf(programPath) + programPath.Length + 1);
+            }
+            else
+            {
+
+            }
+            return newArgs;
+        }
+
         private void btnExecute_Click(object sender, EventArgs e)
         {
             if (_CheckConfig() == true)
             {
-                string programPath = tbProgramPath.Text.Trim();
                 string batContent = _GetExecuteParamString();
+                string programPath = tbProgramPath.Text.Trim();
+
+                string args = TrimArgs(programPath, batContent);
+                string exe = programPath.Replace('/', '\\');
+
                 // System.Diagnostics.Process.Start函数无法识别用/分层的相对路径，故需进行转换
-                System.Diagnostics.Process.Start(programPath.Replace('/', '\\'), batContent.Substring(batContent.IndexOf(programPath) + programPath.Length + 1));
+                System.Diagnostics.Process.Start(exe, args);
             }
         }
 
@@ -276,10 +295,14 @@ namespace XlsxToLuaGUI
         {
             if (_CheckConfig() == true)
             {
-                string programPath = tbProgramPath.Text.Trim();
                 string batContent = _GetExecuteParamString("en");
+                string programPath = tbProgramPath.Text.Trim();
+
+                string args = TrimArgs(programPath, batContent);
+                string exe = programPath.Replace('/', '\\');
+
                 // System.Diagnostics.Process.Start函数无法识别用/分层的相对路径，故需进行转换
-                System.Diagnostics.Process.Start(programPath.Replace('/', '\\'), batContent.Substring(batContent.IndexOf(programPath) + programPath.Length + 1));
+                System.Diagnostics.Process.Start(exe, args);
             }
         }
 
@@ -287,10 +310,14 @@ namespace XlsxToLuaGUI
         {
             if (_CheckConfig() == true)
             {
-                string programPath = tbProgramPath.Text.Trim();
                 string batContent = _GetExecuteParamString("tw");
+                string programPath = tbProgramPath.Text.Trim();
+
+                string args = TrimArgs(programPath, batContent);
+                string exe = programPath.Replace('/', '\\');
+
                 // System.Diagnostics.Process.Start函数无法识别用/分层的相对路径，故需进行转换
-                System.Diagnostics.Process.Start(programPath.Replace('/', '\\'), batContent.Substring(batContent.IndexOf(programPath) + programPath.Length + 1));
+                System.Diagnostics.Process.Start(exe, args);
             }
         }
 
@@ -463,6 +490,8 @@ namespace XlsxToLuaGUI
                         configStringBuilder.Append(AppValues.LANG_NOT_MATCHING_PRINT_PARAM_STRING).Append(AppValues.SAVE_CONFIG_KEY_VALUE_SEPARATOR).AppendLine(TRUE_STRING);
                     if (cbExportMySQL.Checked == true)
                         configStringBuilder.Append(AppValues.EXPORT_MYSQL_PARAM_STRING).Append(AppValues.SAVE_CONFIG_KEY_VALUE_SEPARATOR).AppendLine(TRUE_STRING);
+                    if (cbExportLangOnly.Checked == true)
+                        configStringBuilder.Append(AppValues.EXPORT_LANG_ONLY_PARAM_STRING).Append(AppValues.SAVE_CONFIG_KEY_VALUE_SEPARATOR).AppendLine(TRUE_STRING);
                     if (cbAllowedNullNumber.Checked == true)
                         configStringBuilder.Append(AppValues.ALLOWED_NULL_NUMBER_PARAM_STRING).Append(AppValues.SAVE_CONFIG_KEY_VALUE_SEPARATOR).AppendLine(TRUE_STRING);
 
@@ -538,6 +567,8 @@ namespace XlsxToLuaGUI
                 cbPrintEmptyStringWhenLangNotMatching.Checked = true;
             if (config.ContainsKey(AppValues.EXPORT_MYSQL_PARAM_STRING))
                 cbExportMySQL.Checked = true;
+            if (config.ContainsKey(AppValues.EXPORT_LANG_ONLY_PARAM_STRING))
+                cbExportLangOnly.Checked = true;
             if (config.ContainsKey(AppValues.ALLOWED_NULL_NUMBER_PARAM_STRING))
                 cbAllowedNullNumber.Checked = true;
             if (config.ContainsKey(AppValues.PART_EXPORT_PARAM_STRING))
@@ -554,6 +585,7 @@ namespace XlsxToLuaGUI
             cbIsUseRelativePath.Checked = config.ContainsKey(AppValues.SAVE_CONFIG_KEY_IS_CHECKED_USE_RELATIVE_PATH);
 
         }
+
         private void btnLoadConfig_Click(object sender, EventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
@@ -592,6 +624,8 @@ namespace XlsxToLuaGUI
                     cbPrintEmptyStringWhenLangNotMatching.Checked = true;
                 if (config.ContainsKey(AppValues.EXPORT_MYSQL_PARAM_STRING))
                     cbExportMySQL.Checked = true;
+                if (config.ContainsKey(AppValues.EXPORT_LANG_ONLY_PARAM_STRING))
+                    cbExportLangOnly.Checked = true;
                 if (config.ContainsKey(AppValues.ALLOWED_NULL_NUMBER_PARAM_STRING))
                     cbAllowedNullNumber.Checked = true;
                 if (config.ContainsKey(AppValues.PART_EXPORT_PARAM_STRING))
@@ -1101,7 +1135,10 @@ namespace XlsxToLuaGUI
             if (cbIsUseRelativePath.Checked == true)
             {
                 if (Path.IsPathRooted(programPath))
+                {
                     programPath = Uri.UnescapeDataString(programUri.MakeRelativeUri(new Uri(programPath)).ToString());
+                    tbProgramPath.Text = programPath;
+                }
                 if (Path.IsPathRooted(excelFolderPath))
                     excelFolderPath = Uri.UnescapeDataString(programUri.MakeRelativeUri(new Uri(excelFolderPath)).ToString());
                 if (Path.IsPathRooted(exportLuaFolderPath))
@@ -1115,7 +1152,7 @@ namespace XlsxToLuaGUI
             stringBuilder.AppendFormat("\"{0}\" ", programPath).AppendFormat("\"{0}\" ", excelFolderPath).AppendFormat("\"{0}\" ", exportLuaFolderPath).AppendFormat("\"{0}\" ", clientFolderPath).AppendFormat("\"{0}\" ", langFilePath);
 
             // 导出多语言Lua文件的类型
-            string command = string.Format("-exportLangLua {0}", langType);
+            string command = string.Format("-exportLangLua({0})", langType);
             stringBuilder.AppendFormat("\"{0}\" ", command);
 
 
@@ -1131,6 +1168,8 @@ namespace XlsxToLuaGUI
                 stringBuilder.AppendFormat("\"{0}\" ", AppValues.LANG_NOT_MATCHING_PRINT_PARAM_STRING);
             if (cbExportMySQL.Checked == true)
                 stringBuilder.AppendFormat("\"{0}\" ", AppValues.EXPORT_MYSQL_PARAM_STRING);
+            if (cbExportLangOnly.Checked == true)
+                stringBuilder.AppendFormat("\"{0}\" ", AppValues.EXPORT_LANG_ONLY_PARAM_STRING);
             if (cbAllowedNullNumber.Checked == true)
                 stringBuilder.AppendFormat("\"{0}\" ", AppValues.ALLOWED_NULL_NUMBER_PARAM_STRING);
             if (cbPart.Checked == true)

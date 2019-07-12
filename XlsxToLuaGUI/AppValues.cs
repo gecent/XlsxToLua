@@ -15,6 +15,7 @@ public class AppValues
     public const string NO_LANG_PARAM_STRING = "-noLang";
     public const string LANG_NOT_MATCHING_PRINT_PARAM_STRING = "-printEmptyStringWhenLangNotMatching";
     public const string EXPORT_MYSQL_PARAM_STRING = "-exportMySQL";
+    public const string EXPORT_LANG_ONLY_PARAM_STRING = "-exportLangOnly";
     public const string PART_EXPORT_PARAM_STRING = "-part";
     public const string EXCEPT_EXPORT_PARAM_STRING = "-except";
     public const string ALLOWED_NULL_NUMBER_PARAM_STRING = "-allowedNullNumber";
